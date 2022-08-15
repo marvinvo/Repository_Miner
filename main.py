@@ -53,11 +53,11 @@ def set_up_fetch(download_settings, args, result_queue):
     return start
 
 
-def set_up_download(input_queue, result_queue):
+def set_up_download(input_queue, result_queue, nr_processes):
     downloaded_projects = Value('i', 0) #counts the finished downloaded projects
 
     # set up workers for project download
-    download_pool = Pool(NCORE, initializer=download_worker_func, initargs=(input_queue, downloaded_projects, result_queue, iolock, settings))
+    download_pool = Pool(nr_processes, initializer=download_worker_func, initargs=(input_queue, downloaded_projects, result_queue, iolock, settings))
 
     def end():
         download_pool.close()
@@ -66,11 +66,11 @@ def set_up_download(input_queue, result_queue):
     return end
 
 
-def set_up_compile(input_queue):
+def set_up_compile(input_queue, nr_processes):
     compiled_projects = Value('i', 0) #counts the finished downloaded projects
 
     # set up workers for project compilation
-    compile_pool = Pool(NCORE, initializer=compile_worker_func, initargs=(input_queue, compiled_projects, iolock, settings))
+    compile_pool = Pool(nr_processes, initializer=compile_worker_func, initargs=(input_queue, compiled_projects, iolock, settings))
 
     def end():
         compile_pool.close()
@@ -121,8 +121,8 @@ if __name__ == '__main__':
         iolock = Lock() # general lock might be required for certain io actions
 
         start_func = set_up_fetch(settings, args, download_queue)
-        end_download = set_up_download(download_queue, compile_queue)
-        end_compile = set_up_compile(compile_queue)
+        end_download = set_up_download(download_queue, compile_queue, int(NCORE/2))
+        end_compile = set_up_compile(compile_queue, int(NCORE/2))
         start_func()
         end_download()
         end_compile()
@@ -134,7 +134,7 @@ if __name__ == '__main__':
         iolock = Lock() # general lock might be required for certain io actions
 
         start_func = set_up_fetch(settings, args, download_queue)
-        end_download = set_up_download(download_queue, None)
+        end_download = set_up_download(download_queue, None, NCORE)
         start_func()
         end_download()
         exit(0)
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         compile_queue = Queue(NCORE) # processed by compile workers
         iolock = Lock() # general lock might be required for certain io actions
 
-        end_compile = set_up_compile(compile_queue)
+        end_compile = set_up_compile(compile_queue, NCORE)
         # start compilation
         for folder in os.listdir(settings.result_path):
             f = os.path.join(settings.result_path, folder)
