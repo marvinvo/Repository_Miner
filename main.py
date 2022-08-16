@@ -1,163 +1,126 @@
+import itertools
 from math import ceil
 from multiprocessing.connection import wait
 import os
+from queue import Full
 from time import sleep
 from xmlrpc.client import Boolean
-from download.Download_Worker import download_worker_func
-from compile.Compile_Worker import compile_worker_func
-from search.Get_Repositories import Get_Repositories
-from filter.Last_Commit_Not_Older_Than import Filter
-from multiprocessing import Lock, Process, Queue, Value, Pool
+from multiprocessing import Event, Lock, Process, Queue, Value, Pool
 import argparse, sys
+from repository_worker.Worker import general_worker_pool
+from repository_worker.Download_Worker import download_worker_func
+from repository_worker.ShellScript_Worker import script_worker_func
+from repository_worker.Compile_Worker import compile_worker_func
+import settings
 from settings import Settings
+from repository_fetcher.Get_Repositories import Get_Repositories
 
+def _fetch_process_func(settings, maxdownload, output_queue, end_event):
+    g = Get_Repositories(settings)
+    # get generator that fetch and filter projects 
+    gen = g.getRepositoryGeneratorFromSettings()
+    # fill output queue
+    for i in itertools.count(start=1):
+        repo = next(gen)
+        output_queue.put((repo,i))
 
-def set_up_fetch(download_settings, args, result_queue):
-    # add credentials to authenticate request to Git API
-    with open(args['addtokenfile'], 'r') as f:
-        download_settings.user_token_queue = [[row[0], row[1], None] for row in [line.replace('\n','').split(',') for line in f.readlines()]]
+def start_fetch(settings, output_queue):
+    end_event = Event()
+    end_event.clear()
+    p = Pool(1, initializer=_fetch_process_func, initargs=(settings, 3, output_queue, end_event))
 
-    g = Get_Repositories()
-    g.settings = download_settings
-    f = Filter()
-    f.settings = download_settings
-
-    # TODO probably better to set with Settings object
-    # set up search from args
-    filters = []
-    if 'is-fork' in args:
-        g._fork = args['isfork']
-    else:
-        g._fork = None
-    if 'sort' in args:
-        g._sort = args['sort']
-    if 'order' in args:
-        g._order = args['order']
-
-    # set up filter from args
-    if args['lastcommitnotolderthan']:
-        filters += [f.last_commit_not_older_than(args['lastcommitnotolderthan'])]
-
-    def start():
-        # get generator that fetch and filter projects 
-        repo = g.getRepositoriesGeneratorWithFilter(*filters)
-
-        # fill result queue
-        for i in range(args['maxdownload']):
-            result_queue.put((next(repo),i)) # automatically blocks when queue is full
-
-        # None in queue implicit tells download processes to terminate
-        for _ in range(result_queue._maxsize):
-            result_queue.put((None,None))
+    def stop():
+        end_event.set()
+        p.close()
+        p.join()
         
-    return start
-
-
-def set_up_download(input_queue, result_queue, nr_processes):
-    downloaded_projects = Value('i', 0) #counts the finished downloaded projects
-
-    # set up workers for project download
-    download_pool = Pool(nr_processes, initializer=download_worker_func, initargs=(input_queue, downloaded_projects, result_queue, iolock, settings))
-
-    def end():
-        download_pool.close()
-        download_pool.join() 
-
-    return end
-
-
-def set_up_compile(input_queue, nr_processes):
-    compiled_projects = Value('i', 0) #counts the finished downloaded projects
-
-    # set up workers for project compilation
-    compile_pool = Pool(nr_processes, initializer=compile_worker_func, initargs=(input_queue, compiled_projects, iolock, settings))
-
-    def end():
-        compile_pool.close()
-        compile_pool.join() 
         
-    return end
+    return stop()
+
+def clear_queue(queue):
+    while not queue.empty():
+        queue.get()
+
 
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='Fetch, Filter, Download Projects from Github and Compile Downloaded Projects')
-    argparser.add_argument('--download', help='Fetch, Filter and Download Projects', action='store_true')
-    argparser.add_argument('--compile', help='Compile Downloaded Projects', action='store_true')
-    argparser.add_argument('--resultsfolder', help='Folder Path to store results', required=True)
-    argparser.add_argument('--maxprocesses', type=int, default=20)
+    # general
+    argparser.add_argument('--{}'.format(settings.ARG_RESULTFOLDER), help='folder to store results', required=True)
+    argparser.add_argument('--{}'.format(settings.ARG_PROCESS_LIMIT), type=int, default=20)
+
+    # fetch
+    argfetch = argparser.add_argument_group('fetch', 'Arguments for fetching repositories')
+    argfetch.add_argument('--{}'.format(settings.ARG_FETCH), help='fetch repositories', action='store_true')
+    argfetch.add_argument('--{}'.format(settings.ARG_TOKEN_FILE), required='--{}'.format(settings.ARG_FETCH) in sys.argv)
+    argfetch.add_argument('--{}'.format(settings.ARG_SORT), nargs=1, choices=['best-match', 'stars'],default='stars')
+    argfetch.add_argument('--{}'.format(settings.ARG_ORDER), nargs=1, choices=['desc', 'asc'], default='desc')
+    argfetch.add_argument('--{}'.format(settings.ARG_FORK), choices=['true', 'false'])
+    argfetch.add_argument('--{}'.format(settings.ARG_FILTER), nargs='*', choices=['lastcommitnotolderthan'])
+
     # download
-    argdownload = argparser.add_argument_group('download', 'Arguments for download flag')
-    argdownload.add_argument('--addtokenfile', required='--download' in sys.argv)
-    argdownload.add_argument('--maxdownload', type=int, default=100)
-    argdownload.add_argument('--sort', nargs=1, choices=['best-match', 'stars'],default='stars', help='sort downloaded projects')
-    argdownload.add_argument('--order', nargs=1, choices=['desc', 'asc'], default='desc', help='sort order for downloaded projects')
-    # filter
-    argfilter = argdownload.add_argument_group('filter', 'available filter applied before download')
-    argfilter.add_argument('--isfork', choices=['true', 'false'])
-    argfilter.add_argument('--lastcommitnotolderthan', type=int, metavar='days', nargs=1, help='latest commit must be within set days')
+    argdownload = argparser.add_argument_group('download', 'Arguments for cloning repositories')
+    argdownload.add_argument('--{}'.format(settings.ARG_DOWNLOAD), help='clone fetched repositories', action='store_true')
+    
     # compile
     argcompile = argparser.add_argument_group('compile', 'Arguments for compile flag')
+    argcompile.add_argument('--{}'.format(settings.ARG_COMPILE), help='compile projects in downloaded repositories', action='store_true')
+
+    # shell
+    argcompile.add_argument('--{}'.format(settings.ARG_SHELL_SCRIPT), help='path to shell script that is executed on success')
+
 
     args = vars(argparser.parse_args(sys.argv[1:]))
 
-    # maximal number of parallel processes to start
-    NCORE = 2 if args['maxprocesses'] < 2 else args['maxprocesses']
-
-    settings = Settings()
-    # path where downloaded projects are stored or should be stored
-    settings.result_path = args['resultsfolder']
-
-    if args['addtokenfile']:
-        # add credentials to authenticate request to Git API
-        with open(args['addtokenfile'], 'r') as f:
-            settings.user_token_queue = [[row[0], row[1], None] for row in [line.replace('\n','').split(',') for line in f.readlines()]]
-
+    s = Settings()
+    s.parse_args(args)
+        
+    # TODO fill queues to continue
+    required_queues = sum([s[settings.ARG_COMPILE], s[settings.ARG_DOWNLOAD], s[settings.ARG_SHELL_SCRIPT] != None])
+    process_limit = max(2, s[settings.ARG_PROCESS_LIMIT])
+    queue_limit = max(1, int(process_limit/2))
+    queues = [Queue(queue_limit) for i in range(required_queues)] + [None,]
+    iolock = Lock() # general lock might be required for certain io actions
     
+    print("set up pipeline")
+    def start_func():
+        return
+    # worker_func, input_queue, output_queue, count_value
+    func = []
 
-    if args['download'] and args['compile']:
-        # set up queues for multiprocessing
-        download_queue = Queue(int(NCORE/2)) # processed by download workers
-        compile_queue = Queue(int(NCORE/2)) # processed by compile workers
-        iolock = Lock() # general lock might be required for certain io actions
+    if s[settings.ARG_DOWNLOAD]:
+        func += [{"worker_func": download_worker_func, "name": "download"}]
+    if s[settings.ARG_COMPILE]:
+        func += [{"worker_func": compile_worker_func, "name": "compile"}]
+    if s[settings.ARG_SHELL_SCRIPT]:
+        func += [{"worker_func": script_worker_func, "name": "execute"}]
 
-        start_func = set_up_fetch(settings, args, download_queue)
-        end_download = set_up_download(download_queue, compile_queue, int(NCORE/2))
-        end_compile = set_up_compile(compile_queue, int(NCORE/2))
-        start_func()
-        end_download()
-        end_compile()
-        exit(0)
+    for i in range(required_queues):
+        func[i]["input_queue"] = queues[i]
+        func[i]["output_queue"] = queues[i+1]
+        func[i]["count_value"] = Value('i', 0)
+        func[i]["failed_value"] = Value('i', 0)
+        func[i]["worker_count"] = Value('i', 0)
 
-    if args['download'] and not args['compile']:
-        # set up queues for multiprocessing
-        download_queue = Queue(NCORE) # processed by download workers
-        iolock = Lock() # general lock might be required for certain io actions
+    end_workers = general_worker_pool(func, s, iolock)
+    print("pipeline is ready")
 
-        start_func = set_up_fetch(settings, args, download_queue)
-        end_download = set_up_download(download_queue, None, NCORE)
-        start_func()
-        end_download()
-        exit(0)
-
-    if not args['download'] and args['compile']:
-        # set up queues for multiprocessing
-        compile_queue = Queue(NCORE) # processed by compile workers
-        iolock = Lock() # general lock might be required for certain io actions
-
-        end_compile = set_up_compile(compile_queue, NCORE)
-        # start compilation
-        for folder in os.listdir(settings.result_path):
-            f = os.path.join(settings.result_path, folder)
-            # checking if it is a file
-            if os.path.isdir(f):
-                compile_queue.put(f)
+    if s[settings.ARG_FETCH]:
+        g = Get_Repositories(s)
+        # get generator that fetch and filter projects 
+        gen = g.getRepositoryGeneratorFromSettings()
         
-        
-        for _ in range(compile_queue._maxsize):
-            compile_queue.put(None)
-        
-        end_compile()
-        exit(0)
+        # write stats
+        i=0
+        while func[-1]["count_value"].value < 100:
+            # fill input queue
+            repo = next(gen)
+            queues[0].put((repo,i))
+            stats = "{}   ......   {}".format(", ".join(["{}: {}".format(f["name"] + " success ratio", "{}/{}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value)) for f in func]), ", ".join(["{}: {}".format(f["name"] + " worker", f["worker_count"].value) for f in func]) )
+            print(stats, end='\r')
+            i+=1
 
-
+    end_workers()
+    exit(0)
+        
 

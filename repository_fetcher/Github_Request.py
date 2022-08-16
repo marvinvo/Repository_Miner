@@ -1,9 +1,9 @@
-from datetime import datetime
 import json
-from time import sleep
 import requests
-
+from datetime import datetime
+from time import sleep
 from settings import Settings
+import settings
 
 # adresses
 _GITHUB_API = "https://api.github.com"
@@ -17,15 +17,16 @@ _GITHUB_TIMEOUT_ON_EXCEEDED_RATE = 65 #seconds
 
 class Github_Request:
 
-    def __init__(self):
-        self.settings = Settings()
+    def __init__(self, s):
+        self.s = s
 
     def _get(self, url, data={}):
-        utq = self.settings.user_token_queue
+        utq = self.s[settings.ARG_TOKEN_FILE]
         req = requests.get(url, data, auth=(utq[0][0], utq[0][1]))
         response = json.loads(req.text)
 
         # try with other tokens when exceeded rate limit
+        # TODO fetch time to wait from response
         if "message" in response and "rate limit" in response["message"]:
             # update time when exceeded rate limit occur
             utq[0][2] = datetime.now().isoformat()
