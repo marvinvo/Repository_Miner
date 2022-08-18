@@ -21,7 +21,7 @@ def script_worker_func(repo, repo_path, s, iolock) -> str:
     try:
         with open(os.path.join(repo_path, FILENAME_SHELL_LOG), "w+") as f:
             #execute script
-            cmd = "zsh {} {} {}".format(path_to_script, repo_path, project_path)
+            cmd = "{} {} {}".format(path_to_script, repo_path, project_path)
             output = subprocess.check_output(cmd.split(), timeout=TIMEOUT_SHELL, stderr=f).decode("utf-8")
              # write log
             f.write(output)
