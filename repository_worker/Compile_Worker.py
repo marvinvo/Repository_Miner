@@ -33,7 +33,7 @@ def compile_worker_func(repo, repo_path, s, iolock):
     # maven
     mvn_pom = os.path.join(project_path, "pom.xml") 
     if os.path.exists(mvn_pom):
-        return run_build("mvn clean compile")
+        return run_build("mvn clean compile -DskipTests='True'")
 
     # gradle
     build_gradle = os.path.join(project_path, "build.gradle")

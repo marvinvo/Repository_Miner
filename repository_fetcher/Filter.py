@@ -12,8 +12,8 @@ class Filter(Github_Request):
     def last_commit_not_older_than(self, days):
         since = (datetime.datetime.now() - datetime.timedelta(days)).isoformat()
         def filter(repo):
-            with open(os.path.join(repo, FILENAME_REPO_JSON), "r") as g:
-                repo = json.loads(g.read())
+            # with open(os.path.join(repo, FILENAME_REPO_JSON), "r") as g:
+            #     repo = json.loads(g.read())
             return len(self.get_commit_since(repo, since)) > 0
         return filter
 

@@ -5,7 +5,9 @@ import os
 from queue import Full
 from time import sleep
 from xmlrpc.client import Boolean
-from multiprocessing import Event, Lock, Process, Queue, Value, Pool
+from queue import Queue
+import threading
+from multiprocessing import Event, Lock, Process, Value, Pool
 import argparse, sys
 from repository_worker.Worker import general_worker_pool
 from repository_worker.Download_Worker import download_worker_func
@@ -15,33 +17,84 @@ import settings
 from settings import Settings
 from repository_fetcher.Get_Repositories import Get_Repositories
 
-def _fetch_process_func(settings, maxdownload, output_queue, end_event):
-    g = Get_Repositories(settings)
-    # get generator that fetch and filter projects 
-    gen = g.getRepositoryGeneratorFromSettings()
-    # fill output queue
-    for i in itertools.count(start=1):
-        repo = next(gen)
-        output_queue.put((repo,i))
-
-def start_fetch(settings, output_queue):
-    end_event = Event()
-    end_event.clear()
-    p = Pool(1, initializer=_fetch_process_func, initargs=(settings, 3, output_queue, end_event))
-
-    def stop():
-        end_event.set()
-        p.close()
-        p.join()
-        
-        
-    return stop()
-
 def clear_queue(queue):
     while not queue.empty():
         queue.get()
 
+#
+# FUNCTIONS TO INITIAL FILL QUEUES
+#
 
+def fetched(output_queue, s, end_event):
+    # find repositories that are already fetched
+    for _, dirnames, _ in os.walk(s[settings.ARG_RESULTFOLDER]):
+        for dir in dirnames:
+            if end_event.is_set():
+                return
+
+            project_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir)
+            log_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir, settings.FILENAME_WORKER_LOG)
+            github_json = os.path.join(s[settings.ARG_RESULTFOLDER], dir, settings.FILENAME_REPO_JSON)
+            if not os.path.exists(log_path) and os.path.exists(github_json):
+                output_queue.put((project_path, 0))
+
+
+    # fetch new repositories from github
+    print("start fetching from github")
+    g = Get_Repositories(s)
+    # get generator that fetch and filter projects 
+    gen = g.getRepositoryGeneratorFromSettings()
+    
+    # write stats
+    i=0
+    while not end_event.is_set():
+        # fill input queue
+        repo = next(gen)
+        output_queue.put((repo,i))
+        i+=1
+
+    
+
+def last_state(output_queue, s, end_event, last_state):
+    for dirpath, dirnames, filenames in os.walk(s[settings.ARG_RESULTFOLDER]):
+        for dir in dirnames:
+            if end_event.is_set():
+                return
+
+            project_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir)
+            log_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir, settings.FILENAME_WORKER_LOG)
+            if not os.path.exists(log_path):
+                continue
+
+            with open(log_path, 'r') as log:
+                last_line = log.readlines()[-1]
+                if "Failed" in last_line or "Timeout" in last_line:
+                    continue
+                if last_state in last_line:
+                    output_queue.put((project_path, 0))
+                
+def downloaded(output_queue, s, end_event):
+    last_state(output_queue, s, end_event, "Download")
+
+def compiled(output_queue, s, end_event):
+    last_state(output_queue, s, end_event, "Compile")
+
+#
+# Stats Process Function
+#
+def print_stats(func, end_event):
+    while not end_event.is_set():
+        stats = "{}   ......   {}".format(", ".join(["{}: {}".format(f["name"] + " success ratio", "{}/{}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value)) for f in func]), ", ".join(["{}: {}".format(f["name"] + " worker", f["worker_count"].value) for f in func]) )
+        print(stats, end='\r')
+        sleep(1)
+
+#
+# workers process function
+#
+def workers(func, s, iolock):
+    return general_worker_pool(func, s, iolock)
+
+#python3 main.py --resultsfolder /Users/marvinvogel/Downloads/test5 --tokenfile ../CREDENTIALS.txt --fetch --download --compile --execonsuccess ../run_cambench_cov.sh
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='Fetch, Filter, Download Projects from Github and Compile Downloaded Projects')
@@ -61,6 +114,7 @@ if __name__ == '__main__':
     # download
     argdownload = argparser.add_argument_group('download', 'Arguments for cloning repositories')
     argdownload.add_argument('--{}'.format(settings.ARG_DOWNLOAD), help='clone fetched repositories', action='store_true')
+    argdownload.add_argument('--{}'.format(settings.ARG_CLEAN_AFTER_FAILURE), help='removes cloned repository after failure', action='store_true')
     
     # compile
     argcompile = argparser.add_argument_group('compile', 'Arguments for compile flag')
@@ -83,15 +137,18 @@ if __name__ == '__main__':
     iolock = Lock() # general lock might be required for certain io actions
     
     print("set up pipeline")
-    def start_func():
-        return
-    # worker_func, input_queue, output_queue, count_value
-    func = []
+    
+    queue_fill_functions = []
 
+    func = []
+    if s[settings.ARG_FETCH]:
+        queue_fill_functions += [fetched,]
     if s[settings.ARG_DOWNLOAD]:
         func += [{"worker_func": download_worker_func, "name": "download"}]
+        queue_fill_functions += [downloaded,]
     if s[settings.ARG_COMPILE]:
         func += [{"worker_func": compile_worker_func, "name": "compile"}]
+        queue_fill_functions += [compiled,]
     if s[settings.ARG_SHELL_SCRIPT]:
         func += [{"worker_func": script_worker_func, "name": "execute"}]
 
@@ -102,25 +159,29 @@ if __name__ == '__main__':
         func[i]["failed_value"] = Value('i', 0)
         func[i]["worker_count"] = Value('i', 0)
 
-    end_workers = general_worker_pool(func, s, iolock)
+    end_event = Event()
+    end_event.clear()
+
+    def start():
+        for i in range(1, len(queue_fill_functions)+1):
+            queue_fill_functions[-i](func[-i]["input_queue"], s, end_event)
+            
+    end_daemon_workers = workers(func, s, iolock)
+    #worker_process = Process(target=workers, args=(func, s))
+    #worker_process.daemon = True
+    #worker_process.start()
+
     print("pipeline is ready")
 
-    if s[settings.ARG_FETCH]:
-        g = Get_Repositories(s)
-        # get generator that fetch and filter projects 
-        gen = g.getRepositoryGeneratorFromSettings()
-        
-        # write stats
-        i=0
-        while func[-1]["count_value"].value < 100:
-            # fill input queue
-            repo = next(gen)
-            queues[0].put((repo,i))
-            stats = "{}   ......   {}".format(", ".join(["{}: {}".format(f["name"] + " success ratio", "{}/{}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value)) for f in func]), ", ".join(["{}: {}".format(f["name"] + " worker", f["worker_count"].value) for f in func]) )
-            print(stats, end='\r')
-            i+=1
+    stats_thread = threading.Thread(target=print_stats, args=(func, end_event), daemon = True)
+    stats_thread.start()
 
-    end_workers()
+    print("start filling worker queues...")
+    start()
+
+    
+
+    #end_workers()
     exit(0)
         
 

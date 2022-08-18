@@ -45,29 +45,17 @@ class Get_Repositories(Github_Request):
         page = 0
         while True:
             try:
-                repos = self._getRepositories(last_sort=last_sort, per_page=_GITHUB_MAX_PAGE_RESULTS, page=str(page))["items"]
-                for repo in repos:
-                    project_path = os.path.join(self.s[settings.ARG_RESULTFOLDER], repo["full_name"].replace("/", "_"))
-
-                    try:
-                        # create a folder to store project
-                        os.makedirs(project_path, exist_ok=False)
-                    except OSError:
-                        # project has already been fetched
-                        continue
-
-                    # create file with github properties
-                    with open(os.path.join(project_path, FILENAME_REPO_JSON), 'w') as g:
-                        g.write(json.dumps(repo))
-
-                    yield project_path
+                for _ in range(5):
+                    repos = self._getRepositories(last_sort=last_sort, per_page=_GITHUB_MAX_PAGE_RESULTS, page=str(page))["items"]
+                    for repo in repos:
+                        yield repo
 
                 page += 1
 
                 # search api is limited to 1000 results
                 # this provides a workaround to gain more
                 if(page*_GITHUB_MAX_PAGE_RESULTS >= _GITHUB_MAX_SEARCH_RESULTS):
-                    last_sort = repos[-1]["stargazers_count"]
+                    last_sort = repos[int(len(repos)/3)]["stargazers_count"]
                     page=0
 
             except KeyError:
@@ -76,17 +64,35 @@ class Get_Repositories(Github_Request):
 
             
 
-
     def getRepositoriesGeneratorWithFilter(self, filter_list):
         if len(filter_list) <= 0:
             return self.getRepositoriesGenerator()
         else:
             return filter(filter_list[-1], self.getRepositoriesGeneratorWithFilter(filter_list[:-1]))
 
+    
     def getRepositoryGeneratorFromSettings(self):
         filt = [Filter(self.s).last_commit_not_older_than(90)]
 
-        return self.getRepositoriesGeneratorWithFilter(filt)
+        repo_gen = self.getRepositoriesGeneratorWithFilter(filt)
+        while True:
+            repo = next(repo_gen)
+            project_path = os.path.join(self.s[settings.ARG_RESULTFOLDER], repo["full_name"].replace("/", "_"))
+
+            try:
+                # create a folder to store project
+                os.makedirs(project_path, exist_ok=False)
+            except OSError:
+                # project has already been fetched
+                continue
+
+            # create file with github properties
+            with open(os.path.join(project_path, FILENAME_REPO_JSON), 'w') as g:
+                g.write(json.dumps(repo))
+
+            yield project_path
+
+    
 
 
 
