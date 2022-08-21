@@ -38,7 +38,7 @@ def compile_worker_func(repo, repo_path, s, iolock):
     # gradle
     build_gradle = os.path.join(project_path, "build.gradle")
     if os.path.exists(build_gradle):
-        return run_build("gradle build")
+        return run_build("gradle build --no-daemon")
     
     # ivy
     ivy_file = os.path.join(project_path, "ivy.xml")
