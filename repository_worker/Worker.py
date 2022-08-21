@@ -28,12 +28,11 @@ def worker_pool(download_worker_func, input_queue, output_queue, s, iolock, nr_p
     return [end, count_value]
 
 def _clean_up(repo_path, repo):
-    if "test" in str(repo_path):
-        cmd = "rm -rf {}".format(repo["name"])
-        try:
-            output = subprocess.check_output(cmd.split(), cwd=repo_path)
-        except subprocess.CalledProcessError:
-            pass
+    cmd = "rm -rf {}".format(repo["name"])
+    try:
+        output = subprocess.check_output(cmd.split(), cwd=repo_path)
+    except subprocess.CalledProcessError:
+        pass
 
 def _worker_loop(worker_func, input_queue, output_queue, count_value, s, iolock, end_event):
     while not end_event.is_set():
