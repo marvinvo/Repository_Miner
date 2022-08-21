@@ -87,8 +87,8 @@ def print_stats(s, func, end_event):
         stats_file = os.path.join(s[settings.ARG_RESULTFOLDER], "general_stats.log")
         while not end_event.is_set():
             stats = "{}   ......   {}".format(", ".join(["{}: {}".format(f["name"] + " success ratio", "{}/{}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value)) for f in func]), ", ".join(["{}: {}".format(f["name"] + " worker", f["worker_count"].value) for f in func]) )
-            with open(stats_file + "\n", "a+") as f:
-                f.write(stats)
+            with open(stats_file, "a+") as f:
+                f.write(stats + "\n")
             sleep(10)
     else:
         while not end_event.is_set():
