@@ -10,6 +10,7 @@ ARG_FORK = "fork"
 ARG_FILTER = "filter"
 ARG_SHELL_SCRIPT = "execonsuccess"
 ARG_CLEAN_AFTER_FAILURE = "keepclean"
+ARG_STATS_TO_FILE = "writestats"
 
 FILENAME_REPO_JSON = "github.json"
 FILENAME_WORKER_LOG = "worker.log"

@@ -82,11 +82,19 @@ def compiled(output_queue, s, end_event):
 #
 # Stats Process Function
 #
-def print_stats(func, end_event):
-    while not end_event.is_set():
-        stats = "{}   ......   {}".format(", ".join(["{}: {}".format(f["name"] + " success ratio", "{}/{}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value)) for f in func]), ", ".join(["{}: {}".format(f["name"] + " worker", f["worker_count"].value) for f in func]) )
-        print(stats, end='\r')
-        sleep(1)
+def print_stats(s, func, end_event):
+    if s[settings.ARG_STATS_TO_FILE]:
+        stats_file = os.path.join(s[settings.ARG_RESULTFOLDER], "general_stats.log")
+        while not end_event.is_set():
+            stats = "{}   ......   {}".format(", ".join(["{}: {}".format(f["name"] + " success ratio", "{}/{}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value)) for f in func]), ", ".join(["{}: {}".format(f["name"] + " worker", f["worker_count"].value) for f in func]) )
+            with open(stats_file, "a+") as f:
+                f.write(stats)
+            sleep(5)
+    else:
+        while not end_event.is_set():
+            stats = "{}   ......   {}".format(", ".join(["{}: {}".format(f["name"] + " success ratio", "{}/{}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value)) for f in func]), ", ".join(["{}: {}".format(f["name"] + " worker", f["worker_count"].value) for f in func]) )
+            print(stats, end='\r')
+            sleep(1)
 
 #
 # workers process function
@@ -101,6 +109,7 @@ if __name__ == '__main__':
     # general
     argparser.add_argument('--{}'.format(settings.ARG_RESULTFOLDER), help='folder to store results', required=True)
     argparser.add_argument('--{}'.format(settings.ARG_PROCESS_LIMIT), type=int, default=20)
+    argparser.add_argument('--{}'.format(settings.ARG_STATS_TO_FILE), action='store_true')
 
     # fetch
     argfetch = argparser.add_argument_group('fetch', 'Arguments for fetching repositories')
@@ -173,7 +182,7 @@ if __name__ == '__main__':
 
     print("pipeline is ready")
 
-    stats_thread = threading.Thread(target=print_stats, args=(func, end_event), daemon = True)
+    stats_thread = threading.Thread(target=print_stats, args=(s, func, end_event), daemon = True)
     stats_thread.start()
 
     print("start filling worker queues...")
