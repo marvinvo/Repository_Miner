@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     func = []
     if s[settings.ARG_FETCH]:
-        queue_fill_functions += [fetched,]
+        queue_fill_functions += [fetched,] # this is not implemented as worker
     if s[settings.ARG_DOWNLOAD]:
         func += [{"worker_func": download_worker_func, "name": "download"}]
         queue_fill_functions += [downloaded,]
@@ -160,6 +160,7 @@ if __name__ == '__main__':
         queue_fill_functions += [compiled,]
     if s[settings.ARG_SHELL_SCRIPT]:
         func += [{"worker_func": script_worker_func, "name": "execute"}]
+        queue_fill_functions += [lambda *x:x,] # add dummy function because this cannot fill any queue
 
     for i in range(required_queues):
         func[i]["input_queue"] = queues[i]
@@ -183,7 +184,7 @@ if __name__ == '__main__':
 
     print("start filling worker queues...")
     for i in range(1, len(queue_fill_functions)+1):
-        queue_fill_functions[-i](func[-i]["input_queue"], s, end_event)
+        queue_fill_functions[-i](func[-i+1]["input_queue"], s, end_event)
 
 
     
