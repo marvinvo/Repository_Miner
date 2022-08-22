@@ -72,7 +72,8 @@ class Get_Repositories(Github_Request):
 
     
     def getRepositoryGeneratorFromSettings(self):
-        filt = [Filter(self.s).last_commit_not_older_than(90)]
+        # TODO filters should be parsed from command line
+        filt = [Filter(self.s).last_commit_not_older_than("22/02/22", "22/08/22")]
 
         repo_gen = self.getRepositoriesGeneratorWithFilter(filt)
         while True:

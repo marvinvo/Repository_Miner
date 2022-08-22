@@ -9,15 +9,19 @@ class Filter(Github_Request):
 
     
     # returns the filter function
-    def last_commit_not_older_than(self, days):
-        since = (datetime.datetime.now() - datetime.timedelta(days)).isoformat()
+    def last_commit_not_older_than(self, since, until):
+        _since = datetime.strptime(since, '%d/%m/%y').isoformat()
+        _until = datetime.strptime(until, '%d/%m/%y').isoformat()
         def filter(repo):
             # with open(os.path.join(repo, FILENAME_REPO_JSON), "r") as g:
             #     repo = json.loads(g.read())
-            return len(self.get_commit_since(repo, since)) > 0
+            repo["commits"] = self.get_commit_since(repo, _since, _until)
+            repo["commits_since"] = str(_since)
+            repo["commits_until"] = str(_until)
+            return len(repo["commits"]) > 0
         return filter
 
 
-    def get_commit_since(self, repo, since):
-        url = "{}?{}".format(_GITHUB_COMMITS.format(repo["full_name"]), self._createUrlParams({"since": str(since)}))
+    def get_commits(self, repo, since, until):
+        url = "{}?{}".format(_GITHUB_COMMITS.format(repo["full_name"]), self._createUrlParams({"since": str(since), "until": str(until)}))
         return self._get(url)

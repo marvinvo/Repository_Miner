@@ -88,7 +88,7 @@ def print_stats(s, func, end_event):
         while not end_event.is_set():
             stats = "{}   ......   {}".format(", ".join(["{}: {}".format(f["name"] + " success ratio", "{}/{}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value)) for f in func]), ", ".join(["{}: {}".format(f["name"] + " worker", f["worker_count"].value) for f in func]) )
             with open(stats_file, "a+") as f:
-                f.write(stats + "\n")
+                f.write(stats, end="\n")
             sleep(10)
     else:
         while not end_event.is_set():
@@ -170,11 +170,7 @@ if __name__ == '__main__':
 
     end_event = Event()
     end_event.clear()
-
-    def start():
-        for i in range(1, len(queue_fill_functions)+1):
-            queue_fill_functions[-i](func[-i]["input_queue"], s, end_event)
-            
+                   
     end_daemon_workers = workers(func, s, iolock)
     #worker_process = Process(target=workers, args=(func, s))
     #worker_process.daemon = True
@@ -186,7 +182,9 @@ if __name__ == '__main__':
     stats_thread.start()
 
     print("start filling worker queues...")
-    start()
+    for i in range(1, len(queue_fill_functions)+1):
+        queue_fill_functions[-i](func[-i]["input_queue"], s, end_event)
+
 
     
 
