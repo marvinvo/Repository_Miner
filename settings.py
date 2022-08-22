@@ -17,6 +17,7 @@ FILENAME_WORKER_LOG = "worker.log"
 FILENAME_DOWNLOAD_LOG = "download.log"
 FILENAME_COMPILE_LOG = "compile.log"
 FILENAME_SHELL_LOG = "shell.log"
+FILENAME_EXTENSION_FOR_ERRORS = "errors_" # e.g. errors_shell.log for shell errors
 
 TIMEOUT_DOWNLOAD = 600
 TIMEOUT_COMPILE = 800

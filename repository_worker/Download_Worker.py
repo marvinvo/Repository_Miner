@@ -1,7 +1,6 @@
 import os
 import subprocess
-from Repository_Miner.settings import FILENAME_EXTENSION_FOR_ERRORS
-from settings import FILENAME_DOWNLOAD_LOG, TIMEOUT_DOWNLOAD
+from settings import FILENAME_DOWNLOAD_LOG, TIMEOUT_DOWNLOAD, FILENAME_EXTENSION_FOR_ERRORS
 from repository_worker.WorkerError import WorkerError
 
 

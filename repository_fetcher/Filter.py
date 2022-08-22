@@ -10,12 +10,12 @@ class Filter(Github_Request):
     
     # returns the filter function
     def last_commit_not_older_than(self, since, until):
-        _since = datetime.strptime(since, '%d/%m/%y').isoformat()
-        _until = datetime.strptime(until, '%d/%m/%y').isoformat()
+        _since = datetime.datetime.strptime(since, '%d/%m/%y').isoformat()
+        _until = datetime.datetime.strptime(until, '%d/%m/%y').isoformat()
         def filter(repo):
             # with open(os.path.join(repo, FILENAME_REPO_JSON), "r") as g:
             #     repo = json.loads(g.read())
-            repo["commits"] = self.get_commit_since(repo, _since, _until)
+            repo["commits"] = self.get_commits(repo, _since, _until)
             repo["commits_since"] = str(_since)
             repo["commits_until"] = str(_until)
             return len(repo["commits"]) > 0

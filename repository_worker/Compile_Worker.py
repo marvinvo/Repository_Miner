@@ -1,6 +1,6 @@
 import os
 import subprocess
-from settings import FILENAME_COMPILE_LOG, TIMEOUT_COMPILE
+from settings import FILENAME_COMPILE_LOG, TIMEOUT_COMPILE, FILENAME_EXTENSION_FOR_ERRORS
 from repository_worker.WorkerError import WorkerError
 
 
@@ -14,9 +14,11 @@ def compile_worker_func(repo, repo_path, s, iolock):
 
     def run_build(cmd):
         try:
-            with open(os.path.join(repo_path, FILENAME_COMPILE_LOG), "w+") as f:
+            with open(os.path.join(repo_path, FILENAME_EXTENSION_FOR_ERRORS + FILENAME_COMPILE_LOG), "w+") as f:
                 # execute build command
                 process_out = subprocess.check_output(cmd.split(), cwd=project_path, timeout=TIMEOUT_COMPILE, stderr=f).decode("utf-8")
+
+            with open(os.path.join(repo_path, FILENAME_COMPILE_LOG), "w+") as f:
                 # write log
                 f.write(process_out)
             return "Compile Success"
