@@ -10,7 +10,7 @@
 
 _bash_source=$( dirname "${BASH_SOURCE[0]}" )
 _bash_source="$(realpath "$_bash_source")"
-cambench="/Users/marvinvogel/Documents/Uni/CamBench/Repository_Miner/demo/CamBench_fetch/lib/CamBench_cov.jar"
+cambench="$_bash_source/lib/CamBench_cov.jar"
 packages_to_scan="$_bash_source/packages.txt"
 analysis_result_folder="$1/analysis_results"
 execute_on_success="$_bash_source/execute_on_success.sh"
