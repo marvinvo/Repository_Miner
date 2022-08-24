@@ -25,7 +25,7 @@ for folder in $1/**/classes/ ; do
     echo "Search for usages of specified packages in $folder" >&2;
     mkdir "$analysis_result_folder/classes_folder_$i";
     report_path="$analysis_result_folder/classes_folder_$i";
-    echo "execute: java -jar $cambench --result-path $report_path --project-path $folder --packages-to-scan $(readlink -f $packages_to_scan);" >&2;
+    echo "execute: java -jar '$cambench' --result-path $report_path --project-path $folder --packages-to-scan $(readlink -f $packages_to_scan);" >&2;
     java -jar "$cambench" --result-path "$report_path" --project-path "$folder" --packages-to-scan "$(readlink -f $packages_to_scan)";
     if [[ $? -eq 0 ]]
     then
