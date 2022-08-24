@@ -8,7 +8,8 @@
 # parameter: $1=absolute_repo_path, $2=absolute_project_path
 
 
-_bash_source=$( dirname -- "${BASH_SOURCE[0]}" )
+_bash_source=$( dirname "${BASH_SOURCE[0]}" )
+_bash_source="$(realpath "$_bash_source")"
 
 # create regex from packages
 # readarray -t packages < $_bash_source/../packages.txt;

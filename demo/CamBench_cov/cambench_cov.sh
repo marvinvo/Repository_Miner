@@ -6,7 +6,8 @@
 MAX_PROCESSES="20"
 FORK="false"
 
-_bash_source=$( dirname -- "${BASH_SOURCE[0]}" )
+_bash_source=$( dirname "${BASH_SOURCE[0]}" )
+_bash_source="$(realpath "$_bash_source")"
 _execute_after_download="$_bash_source/scripts/execute_after_download.sh"
 _execute_after_compile="$_bash_source/scripts/execute_after_compile.sh"
 
