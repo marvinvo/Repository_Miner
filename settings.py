@@ -8,7 +8,11 @@ ARG_SORT = "sort"
 ARG_ORDER = "order"
 ARG_FORK = "fork"
 ARG_FILTER = "filter"
-ARG_SHELL_SCRIPT = "execonsuccess"
+
+ARG_EXEC_AFTER_FETCH = "" # probably unneccassary feature
+ARG_EXEC_AFTER_DOWNLOAD = "execAfterDownload"
+ARG_SHELL_SCRIPT = "execonsuccess" # this is acutally ARG_EXEC_AFTER_COMPILE
+
 ARG_CLEAN_AFTER_FAILURE = "keepclean"
 ARG_STATS_TO_FILE = "writestats"
 
@@ -31,3 +35,4 @@ class Settings(dict):
         if ARG_TOKEN_FILE in self:
             with open(self[ARG_TOKEN_FILE], 'r') as f:
                 self[ARG_TOKEN_FILE] = [[row[0], row[1], None] for row in [line.replace('\n','').split(',') for line in f.readlines()]]
+

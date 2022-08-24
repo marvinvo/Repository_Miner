@@ -91,7 +91,7 @@ def _general_worker_function(func, s, iolock, end_event, worker_id):
         
         try:
             # try to execute worker function
-            log = func[work_on]["worker_func"](repo=repo, repo_path=repo_path, s=s, iolock=iolock)
+            log = func[work_on]["worker_func"](repo=repo, repo_path=repo_path, s=s, iolock=iolock, func=func[work_on])
         except Exception as e:
             with open(os.path.join(repo_path, FILENAME_WORKER_LOG), "a+") as l:
                 l.write(str(e) + "\n")

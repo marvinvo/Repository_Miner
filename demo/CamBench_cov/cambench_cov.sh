@@ -1,8 +1,8 @@
 #! /usr/bin/env bash
 
 
-RESULTS_FOLDER="/Users/marvinvogel/Downloads/test5"
-GITHUB_TOKENS="/Users/marvinvogel/Documents/Uni/CamBench/docker/CREDENTIALS.txt"
+# RESULTS_FOLDER="/Users/marvinvogel/Downloads/test5"
+# GITHUB_TOKENS="/Users/marvinvogel/Documents/Uni/CamBench/docker/CREDENTIALS.txt"
 MAX_PROCESSES="20"
 FORK="false"
 

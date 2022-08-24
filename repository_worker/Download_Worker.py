@@ -4,7 +4,7 @@ from settings import FILENAME_DOWNLOAD_LOG, TIMEOUT_DOWNLOAD, FILENAME_EXTENSION
 from repository_worker.WorkerError import WorkerError
 
 
-def download_worker_func(repo, repo_path, s, iolock) -> str:
+def download_worker_func(repo, repo_path, s, iolock, func) -> str:
     try:
         with open(os.path.join(repo_path, FILENAME_EXTENSION_FOR_ERRORS + FILENAME_DOWNLOAD_LOG), "w+") as f:
             #execute git clone

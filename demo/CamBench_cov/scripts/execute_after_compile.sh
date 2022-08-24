@@ -30,7 +30,7 @@ for folder in $1/**/classes/ ; do
     then
         i=$(( i + 1 ));
         echo "Usages of specified packages found in $folder. Results are stored in $report_path" >&2;
-        $execute_on_success $1 $2 || true
+        $execute_on_success $1 $2 $report_path || true
     else 
         echo "No crypto api calls found in $folder" >&2;
         rm -rf $report_path;

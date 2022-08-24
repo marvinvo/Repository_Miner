@@ -37,6 +37,15 @@ def fetched(output_queue, s, end_event):
             github_json = os.path.join(s[settings.ARG_RESULTFOLDER], dir, settings.FILENAME_REPO_JSON)
             if not os.path.exists(log_path) and os.path.exists(github_json):
                 output_queue.put((project_path, 0))
+            if os.path.exists(github_json):
+                if not os.path.exists(log_path):
+                    output_queue.put((project_path, 0))
+                else:
+                    with open(log_path, 'r') as log:
+                        if len(log.readlines()) == 0:
+                            output_queue.put((project_path, 0))
+                
+
 
 
     # fetch new repositories from github
@@ -67,7 +76,11 @@ def last_state(output_queue, s, end_event, last_state):
                 continue
 
             with open(log_path, 'r') as log:
-                last_line = log.readlines()[-1]
+                # TODO file could be empty
+                lines = log.readlines()
+                if not lines:
+                    continue
+                last_line = lines[-1]
                 if "Failed" in last_line or "Timeout" in last_line:
                     continue
                 if last_state in last_line:
@@ -78,6 +91,9 @@ def downloaded(output_queue, s, end_event):
 
 def compiled(output_queue, s, end_event):
     last_state(output_queue, s, end_event, "Compile")
+
+def after_download_script(output_queue, s, end_event):
+    last_state(output_queue, s, end_event, "{}".format(s[settings.ARG_EXEC_AFTER_DOWNLOAD]))
 
 #
 # Stats Process Function
@@ -91,9 +107,14 @@ def print_stats(s, func, end_event):
                 f.write(stats, end="\n")
             sleep(10)
     else:
+        UP = "\x1B[{}A".format(len(func)+4)
+        CLR = "\x1B[0K"
         while not end_event.is_set():
-            stats = "{}   ......   {}".format(", ".join(["{}: {}".format(f["name"] + " success ratio", "{}/{}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value)) for f in func]), ", ".join(["{}: {}".format(f["name"] + " worker", f["worker_count"].value) for f in func]) )
-            print(stats, end='\r')
+            stats = f"{CLR}\n========================================={CLR}\n{CLR}"
+            stats += f"{CLR}\n".join(["{}: {}".format(f["name"].split("/")[-1] + " success ratio & worker", "{}/{}, {}".format(f["count_value"].value, f["failed_value"].value + f["count_value"].value, f["worker_count"].value)) for f in func])
+            stats += f"\n========================================={CLR}\n{CLR}"
+            stats += f"{UP}"
+            print(stats)
             sleep(1)
 
 #
@@ -124,6 +145,7 @@ if __name__ == '__main__':
     argdownload = argparser.add_argument_group('download', 'Arguments for cloning repositories')
     argdownload.add_argument('--{}'.format(settings.ARG_DOWNLOAD), help='clone fetched repositories', action='store_true')
     argdownload.add_argument('--{}'.format(settings.ARG_CLEAN_AFTER_FAILURE), help='removes cloned repository after failure', action='store_true')
+    argdownload.add_argument('--{}'.format(settings.ARG_EXEC_AFTER_DOWNLOAD), help='path to shell script that is executed after download')
     
     # compile
     argcompile = argparser.add_argument_group('compile', 'Arguments for compile flag')
@@ -139,7 +161,7 @@ if __name__ == '__main__':
     s.parse_args(args)
         
     # TODO fill queues to continue
-    required_queues = sum([s[settings.ARG_COMPILE], s[settings.ARG_DOWNLOAD], s[settings.ARG_SHELL_SCRIPT] != None])
+    required_queues = sum([s[settings.ARG_COMPILE], s[settings.ARG_DOWNLOAD], s[settings.ARG_SHELL_SCRIPT] != None, s[settings.ARG_EXEC_AFTER_DOWNLOAD] != None])
     process_limit = max(2, s[settings.ARG_PROCESS_LIMIT])
     queue_limit = max(1, int(process_limit/2))
     queues = [Queue(queue_limit) for i in range(required_queues)] + [None,]
@@ -155,11 +177,14 @@ if __name__ == '__main__':
     if s[settings.ARG_DOWNLOAD]:
         func += [{"worker_func": download_worker_func, "name": "download"}]
         queue_fill_functions += [downloaded,]
+    if s[settings.ARG_EXEC_AFTER_DOWNLOAD]:
+        func += [{"worker_func": script_worker_func, "name": s[settings.ARG_EXEC_AFTER_DOWNLOAD]}]
+        queue_fill_functions += [after_download_script,]
     if s[settings.ARG_COMPILE]:
         func += [{"worker_func": compile_worker_func, "name": "compile"}]
         queue_fill_functions += [compiled,]
     if s[settings.ARG_SHELL_SCRIPT]:
-        func += [{"worker_func": script_worker_func, "name": "execute"}]
+        func += [{"worker_func": script_worker_func, "name": s[settings.ARG_SHELL_SCRIPT]}]
         queue_fill_functions += [lambda *x:x,] # add dummy function because this cannot fill any queue
 
     for i in range(required_queues):
