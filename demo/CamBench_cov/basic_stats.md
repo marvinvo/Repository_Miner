@@ -22,3 +22,10 @@ Gradle build error count
 
 Output all script errors:
     for i in */errors_shell.log; do cat $i; done
+
+Analysis Results:
+    for i in */errors_download.log; do cat $i; done
+
+Gradle build error count
+    for i in */worker.log; do cat $i; done | grep "zsh /opt/app/Repository_Miner/demo/CamBench_cov/scripts/execute_after_compile.sh Success" | wc -l
+    
