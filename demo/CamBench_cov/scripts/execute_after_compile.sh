@@ -13,7 +13,7 @@ _bash_source="$(realpath "$_bash_source")"
 cambench="$_bash_source/lib/CamBench_cov.jar"
 packages_to_scan="$_bash_source/packages.txt"
 analysis_result_folder="$1/analysis_results"
-execute_on_success="$_bash_source/execute_on_success.sh"
+execute_on_success="$_bash_source/scripts/execute_on_success.sh"
 
 
 mkdir "$analysis_result_folder";
