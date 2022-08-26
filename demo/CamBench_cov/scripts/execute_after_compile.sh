@@ -29,7 +29,7 @@ for folder in $1/**/classes/ ; do
     mkdir "$analysis_result_folder/classes_folder_$i";
     report_path="$analysis_result_folder/classes_folder_$i";
     echo "execute: java -jar '$cambench' --result-path $report_path --project-path $folder --packages-to-scan $(readlink -f $packages_to_scan) --result-dir "/" ;" >&2;
-    java -Xmx$MEMORY_JAVA -Xss$STACKSIZE_JAVA -jar "$cambench" --result-path "$report_path" --project-path "$folder" --packages-to-scan "$(readlink -f $packages_to_scan)" --result-dir "/";
+    java -Xmx$MEMORY_JAVA -Xss$STACKSIZE_JAVA -jar "$cambench" --result-path "$report_path" --project-path "$folder" --result-dir "/" --packages-to-scan "$(readlink -f $packages_to_scan)";
     if [[ $? -eq 0 ]]
     then
         i=$(( i + 1 ));
