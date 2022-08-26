@@ -8,6 +8,9 @@
 
 # parameter: $1=absolute_repo_path, $2=absolute_project_path
 
+#MEMORY_JAVA=3G
+#STACKSIZE_JAVA=2M
+
 _bash_source=$( dirname "${BASH_SOURCE[0]}" )
 _bash_source="$(realpath "$_bash_source")"
 cambench="$_bash_source/lib/CamBench_cov.jar"
@@ -26,7 +29,7 @@ for folder in $1/**/classes/ ; do
     mkdir "$analysis_result_folder/classes_folder_$i";
     report_path="$analysis_result_folder/classes_folder_$i";
     echo "execute: java -jar '$cambench' --result-path $report_path --project-path $folder --packages-to-scan $(readlink -f $packages_to_scan) --result-dir "/" ;" >&2;
-    java -jar "$cambench" --result-path "$report_path" --project-path "$folder" --packages-to-scan "$(readlink -f $packages_to_scan)" --result-dir "/";
+    java -Xmx $MEMORY_JAVA -Xss $STACKSIZE_JAVA -jar "$cambench" --result-path "$report_path" --project-path "$folder" --packages-to-scan "$(readlink -f $packages_to_scan)" --result-dir "/";
     if [[ $? -eq 0 ]]
     then
         i=$(( i + 1 ));
