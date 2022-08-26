@@ -25,13 +25,13 @@ for folder in $1/**/classes/ ; do
     echo "Search for usages of specified packages in $folder" >&2;
     mkdir "$analysis_result_folder/classes_folder_$i";
     report_path="$analysis_result_folder/classes_folder_$i";
-    echo "execute: java -jar '$cambench' --result-path $report_path --project-path $folder --packages-to-scan $(readlink -f $packages_to_scan);" >&2;
-    java -jar "$cambench" --result-path "$report_path" --project-path "$folder" --packages-to-scan "$(readlink -f $packages_to_scan)";
+    echo "execute: java -jar '$cambench' --result-path $report_path --project-path $folder --packages-to-scan $(readlink -f $packages_to_scan) --result-dir "/" ;" >&2;
+    java -jar "$cambench" --result-path "$report_path" --project-path "$folder" --packages-to-scan "$(readlink -f $packages_to_scan)" --result-dir "/";
     if [[ $? -eq 0 ]]
     then
         i=$(( i + 1 ));
         echo "Usages of specified packages found in $folder. Results are stored in $report_path" >&2;
-        zsh $execute_on_success $1 $2 $report_path || true
+        zsh $execute_on_success $1 $2 $report_path $folder || true
     else 
         echo "No crypto api calls found in $folder" >&2;
         rm -rf $report_path;
