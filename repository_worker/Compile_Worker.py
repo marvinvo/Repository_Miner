@@ -4,7 +4,7 @@ from settings import FILENAME_COMPILE_LOG, TIMEOUT_COMPILE, FILENAME_EXTENSION_F
 from repository_worker.WorkerError import WorkerError
 
 
-def compile_worker_func(repo, repo_path, s, iolock, func):
+def compile_worker_func(repo, repo_path, s, iolock, func, locks):
 
     # get path of git clone
     project_path = os.path.join(repo_path, repo["name"])
@@ -40,9 +40,11 @@ def compile_worker_func(repo, repo_path, s, iolock, func):
     # gradle
     build_gradle = os.path.join(project_path, "build.gradle")
     if os.path.exists(build_gradle):
-        if os.path.exists(os.path.join(project_path, "gradlew")):
-            return run_build("./gradlew clean build")
-        return run_build("gradle build")
+        with locks["gradle"]:
+            if os.path.exists(os.path.join(project_path, "gradlew")):
+                run_build("chmod 777 ./gradlew") # make gradlew executable
+                return run_build("./gradlew clean build")
+            return run_build("gradle build")
     
     # ivy
     ivy_file = os.path.join(project_path, "ivy.xml")

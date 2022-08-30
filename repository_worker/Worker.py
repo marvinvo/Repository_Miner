@@ -65,7 +65,7 @@ def _worker_loop(worker_func, input_queue, output_queue, count_value, s, iolock,
         # increase count value
         count_value.value += 1
 
-def _general_worker_function(func, s, iolock, end_event, worker_id):
+def _general_worker_function(func, s, iolock, end_event, worker_id, locks):
     print("thread {} started!".format(worker_id))
     work_on = len(func)
     while not end_event.is_set():
@@ -91,7 +91,7 @@ def _general_worker_function(func, s, iolock, end_event, worker_id):
         
         try:
             # try to execute worker function
-            log = func[work_on]["worker_func"](repo=repo, repo_path=repo_path, s=s, iolock=iolock, func=func[work_on])
+            log = func[work_on]["worker_func"](repo=repo, repo_path=repo_path, s=s, iolock=iolock, func=func[work_on], locks=locks)
         except Exception as e:
             with open(os.path.join(repo_path, FILENAME_WORKER_LOG), "a+") as l:
                 l.write(str(e) + "\n")
@@ -115,14 +115,14 @@ def _general_worker_function(func, s, iolock, end_event, worker_id):
 
         func[work_on]["worker_count"].value -= 1
 
-def general_worker_pool(func_input_queue, s, iolock):
+def general_worker_pool(func_input_queue, s, iolock, locks):
     end_event = Event()
     end_event.clear()
 
     # set up workers for project download
     # download_pool = ThreadPoolExecutor(max_workers=s[settings.ARG_PROCESS_LIMIT], initializer=_general_worker_function, initargs=(func_input_queue, s, iolock, end_event))
     #download_pool = Pool(s[settings.ARG_PROCESS_LIMIT], initializer=_general_worker_function, initargs=(func_input_queue, s, iolock, end_event))
-    daemon_threads = [Thread(target=_general_worker_function, daemon=True, args=[func_input_queue, s, iolock, end_event, i]) for i in range(s[settings.ARG_PROCESS_LIMIT])]
+    daemon_threads = [Thread(target=_general_worker_function, daemon=True, args=[func_input_queue, s, iolock, end_event, i, locks]) for i in range(s[settings.ARG_PROCESS_LIMIT])]
     for daemon in daemon_threads:
         daemon.start()
 

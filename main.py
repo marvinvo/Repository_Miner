@@ -120,8 +120,8 @@ def print_stats(s, func, end_event):
 #
 # workers process function
 #
-def workers(func, s, iolock):
-    return general_worker_pool(func, s, iolock)
+def workers(func, s, iolock, locks):
+    return general_worker_pool(func, s, iolock, locks)
 
 #python3 main.py --resultsfolder /Users/marvinvogel/Downloads/test5 --tokenfile ../CREDENTIALS.txt --fetch --download --compile --execonsuccess ../run_cambench_cov.sh
 
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     end_event = Event()
     end_event.clear()
                    
-    end_daemon_workers = workers(func, s, iolock)
+    end_daemon_workers = workers(func, s, iolock, locks={"gradle": Lock()})
     #worker_process = Process(target=workers, args=(func, s))
     #worker_process.daemon = True
     #worker_process.start()

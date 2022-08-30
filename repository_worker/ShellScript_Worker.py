@@ -4,7 +4,7 @@ from settings import FILENAME_SHELL_LOG, TIMEOUT_SHELL, FILENAME_EXTENSION_FOR_E
 import settings
 from repository_worker.WorkerError import WorkerError
 
-def script_worker_func(repo, repo_path, s, iolock, func) -> str:
+def script_worker_func(repo, repo_path, s, iolock, func, locks) -> str:
 
     # get path of git clone
     project_path = os.path.join(repo_path, repo["name"])
