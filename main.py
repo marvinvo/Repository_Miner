@@ -143,6 +143,7 @@ if __name__ == '__main__':
     argfetch.add_argument('--{}'.format(settings.ARG_ORDER), nargs=1, choices=['desc', 'asc'], default='desc')
     argfetch.add_argument('--{}'.format(settings.ARG_FORK), choices=['true', 'false'])
     argfetch.add_argument('--{}'.format(settings.ARG_FILTER), nargs='*', choices=['lastcommitnotolderthan'])
+    argfetch.add_argument('--{}'.format(settings.ARG_LAST_SORT), type=int, default=999999999)
 
     # download
     argdownload = argparser.add_argument_group('download', 'Arguments for cloning repositories')

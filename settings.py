@@ -8,6 +8,7 @@ ARG_SORT = "sort"
 ARG_ORDER = "order"
 ARG_FORK = "fork"
 ARG_FILTER = "filter"
+ARG_LAST_SORT = "lastsort"
 
 ARG_EXEC_AFTER_FETCH = "" # probably unneccassary feature
 ARG_EXEC_AFTER_DOWNLOAD = "execAfterDownload"

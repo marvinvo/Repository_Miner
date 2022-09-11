@@ -41,7 +41,7 @@ class Get_Repositories(Github_Request):
 
 
     def getRepositoriesGenerator(self):
-        last_sort=str(9999999)
+        last_sort=self.s[settings.ARG_LAST_SORT]
         page = 0
         while True:
             try:

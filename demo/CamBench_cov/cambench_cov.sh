@@ -17,4 +17,5 @@ echo $_execute_after_compile
 python3 "$_bash_source/../../main.py" --resultsfolder "$RESULTS_FOLDER" --tokenfile "$GITHUB_TOKENS" \
 --fetch --download --execAfterDownload "zsh $_execute_after_download" --compile --execonsuccess "zsh $_execute_after_compile" \
 --maxprocesses $MAX_PROCESSES --keepclean --writestats \
---fork $FORK 
+--fork $FORK \
+--lastsort $LASTSORT
