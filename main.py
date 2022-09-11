@@ -128,7 +128,7 @@ def workers(func, s, iolock, locks):
 
 if __name__ == '__main__':
     # due to unexpected exit errors
-    sys.setrecursionlimit(2000)
+    sys.setrecursionlimit(20000)
     argparser = argparse.ArgumentParser(description='Fetch, Filter, Download Projects from Github and Compile Downloaded Projects')
     # general
     argparser.add_argument('--{}'.format(settings.ARG_RESULTFOLDER), help='folder to store results', required=True)
