@@ -16,6 +16,7 @@ from repository_worker.Compile_Worker import compile_worker_func
 import settings
 from settings import Settings
 from repository_fetcher.Get_Repositories import Get_Repositories
+import sys
 
 def clear_queue(queue):
     while not queue.empty():
@@ -126,6 +127,8 @@ def workers(func, s, iolock, locks):
 #python3 main.py --resultsfolder /Users/marvinvogel/Downloads/test5 --tokenfile ../CREDENTIALS.txt --fetch --download --compile --execonsuccess ../run_cambench_cov.sh
 
 if __name__ == '__main__':
+    # due to unexpected exit errors
+    sys.setrecursionlimit(2000)
     argparser = argparse.ArgumentParser(description='Fetch, Filter, Download Projects from Github and Compile Downloaded Projects')
     # general
     argparser.add_argument('--{}'.format(settings.ARG_RESULTFOLDER), help='folder to store results', required=True)
