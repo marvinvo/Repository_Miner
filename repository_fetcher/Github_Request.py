@@ -7,7 +7,7 @@ import settings
 
 # adresses
 _GITHUB_API = "https://api.github.com"
-_GITHUB_SEACH = "{}/search/repositories".format(_GITHUB_API)
+_GITHUB_SEARCH = "{}/search/repositories".format(_GITHUB_API)
 _GITHUB_COMMITS = "{}/repos/{}/commits".format(_GITHUB_API, "{}")
 
 

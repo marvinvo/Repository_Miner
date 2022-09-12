@@ -9,7 +9,7 @@ from queue import Queue
 import threading
 from multiprocessing import Event, Lock, Process, Value, Pool
 import argparse, sys
-from repository_worker.Worker import general_worker_pool
+import repository_worker.Worker as Worker
 from repository_worker.Download_Worker import download_worker_func
 from repository_worker.ShellScript_Worker import script_worker_func
 from repository_worker.Compile_Worker import compile_worker_func
@@ -68,24 +68,28 @@ def fetched(output_queue, s, end_event):
 def last_state(output_queue, s, end_event, last_state):
     for dirpath, dirnames, filenames in os.walk(s[settings.ARG_RESULTFOLDER]):
         for dir in dirnames:
-            if end_event.is_set():
-                return
+            try:
+                if end_event.is_set():
+                    return
 
-            project_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir)
-            log_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir, settings.FILENAME_WORKER_LOG)
-            if not os.path.exists(log_path):
+                project_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir)
+                log_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir, settings.FILENAME_WORKER_LOG)
+                if not os.path.exists(log_path):
+                    continue
+
+                with open(log_path, 'r') as log:
+                    # TODO file could be empty
+                    lines = log.readlines()
+                    if not lines:
+                        continue
+                    last_line = lines[-1]
+                    if "Failed" in last_line or "Timeout" in last_line:
+                        continue
+                    if last_state in last_line:
+                        output_queue.put((project_path, 0))
+            except Exception as e:
+                print(e)
                 continue
-
-            with open(log_path, 'r') as log:
-                # TODO file could be empty
-                lines = log.readlines()
-                if not lines:
-                    continue
-                last_line = lines[-1]
-                if "Failed" in last_line or "Timeout" in last_line:
-                    continue
-                if last_state in last_line:
-                    output_queue.put((project_path, 0))
                 
 def downloaded(output_queue, s, end_event):
     last_state(output_queue, s, end_event, "Download")
@@ -117,12 +121,7 @@ def print_stats(s, func, end_event):
             stats += f"{UP}"
             print(stats)
             sleep(1)
-
-#
-# workers process function
-#
-def workers(func, s, iolock, locks):
-    return general_worker_pool(func, s, iolock, locks)
+        
 
 #python3 main.py --resultsfolder /Users/marvinvogel/Downloads/test5 --tokenfile ../CREDENTIALS.txt --fetch --download --compile --execonsuccess ../run_cambench_cov.sh
 
@@ -164,9 +163,9 @@ if __name__ == '__main__':
     s = Settings()
     s.parse_args(args)
         
-    # TODO fill queues to continue
+    # 
     required_queues = sum([s[settings.ARG_COMPILE], s[settings.ARG_DOWNLOAD], s[settings.ARG_SHELL_SCRIPT] != None, s[settings.ARG_EXEC_AFTER_DOWNLOAD] != None])
-    process_limit = max(2, s[settings.ARG_PROCESS_LIMIT])
+    process_limit = max(1, s[settings.ARG_PROCESS_LIMIT])
     queue_limit = max(1, int(process_limit/2))
     queues = [Queue(queue_limit) for i in range(required_queues)] + [None,]
     iolock = Lock() # general lock might be required for certain io actions
@@ -199,9 +198,10 @@ if __name__ == '__main__':
         func[i]["worker_count"] = Value('i', 0)
 
     end_event = Event()
+    end_event.is_set()
     end_event.clear()
                    
-    end_daemon_workers = workers(func, s, iolock, locks={"gradle": Lock()})
+    end_daemon_workers = Worker.start(func, s, iolock, locks={"gradle": Lock()}, end_event=end_event)
     #worker_process = Process(target=workers, args=(func, s))
     #worker_process.daemon = True
     #worker_process.start()

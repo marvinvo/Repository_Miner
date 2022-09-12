@@ -13,124 +13,97 @@ import settings
 from settings import FILENAME_REPO_JSON, FILENAME_WORKER_LOG
 
 
-def worker_pool(download_worker_func, input_queue, output_queue, s, iolock, nr_processes):
-    count_value = Value('i', 0) #counts the finished downloaded projects
-    end_event = Event()
-    end_event.clear()
-    # set up workers for project download
-    download_pool = Pool(nr_processes, initializer=_worker_loop, initargs=(download_worker_func, input_queue, output_queue, count_value, s, iolock, end_event))
-
-    def end():
-        end_event.set()
-        download_pool.close()
-        download_pool.join()
-
-    return [end, count_value]
-
 def _clean_up(repo_path, repo):
+    """
+    This method is called when a pipeline step execution failed and the keepclean flag is set. 
+    It removes downloaded or cloned repositories from file system.
+    """
     cmd = "rm -rf {}".format(repo["name"])
     try:
         output = subprocess.check_output(cmd.split(), cwd=repo_path)
     except subprocess.CalledProcessError:
         pass
 
-def _worker_loop(worker_func, input_queue, output_queue, count_value, s, iolock, end_event):
-    while not end_event.is_set():
-        try:
-            repo_path, i = input_queue.get(block=True, timeout=5)
-        except Empty:
-            continue
-
-        with open(os.path.join(repo_path, FILENAME_REPO_JSON), "r") as g:
-            repo = json.loads(g.read())
-        
-        
-        try:
-            # try to execute worker function
-            log = worker_func(repo=repo, repo_path=repo_path, s=s, iolock=iolock)
-        except WorkerError as e:
-            with open(os.path.join(repo_path, FILENAME_WORKER_LOG), "a+") as l:
-                l.write(str(e) + "\n")
-            _clean_up(repo_path, repo)
-            continue
-        
-        # write log
-        with open(os.path.join(repo_path, FILENAME_WORKER_LOG), "a+") as l:
-            l.write(log + "\n")
-
-        # fill result queue
-        if output_queue:
-            output_queue.put((repo_path, i))
-
-        # increase count value
-        count_value.value += 1
 
 def _general_worker_function(func, s, iolock, end_event, worker_id, locks):
     print("thread {} started!".format(worker_id))
-    work_on = len(func)
+    work_on = len(func) # defines the pipeline step function to execute
     while not end_event.is_set():
-        if work_on == 0:
-            work_on = len(func)
-        # if (func[work_on]["output_queue"] and func[work_on]["output_queue"].full()) or func[work_on]["input_queue"].empty():
-        #     work_on -= 1
-        #     sleep(0.2)
-        #     continue
-        
-        work_on -= 1
+        try:
+            if work_on < 0:
+                # end of pipeline, start at last pipeline step
+                work_on = len(func)-1
+
+            # holds information about pipeline step, such as the execution function, input and output queue and counter
+            current_pipeline_step = func[work_on]
             
-        try:
-            repo_path, i = func[work_on]["input_queue"].get(block=True, timeout=1)
-        except Empty:
-            continue
+            # get input
+            try:
+                # try to get input from input queue of current pipeline step
+                repo_path, i = current_pipeline_step["input_queue"].get(block=True, timeout=1)
+                # current pipeline step had input, hence try to execute last pipeline step next
+                # this somehow defines the weightnig to prefer last pipeline steps
+                work_on = len(func)-1
+            except Empty:
+                # no input available, hence try to execute a preceding pipeline step
+                work_on -= 1
+                continue
+            
+            
+            # for stats
+            current_pipeline_step["worker_count"].value += 1
 
-        func[work_on]["worker_count"].value += 1
+            # read input
+            # this is simply Github repository metadata
+            with open(os.path.join(repo_path, FILENAME_REPO_JSON), "r") as g:
+                repo = json.loads(g.read())
+            
+            # execute pipeline step
+            try:
+                log = current_pipeline_step["worker_func"](repo=repo, repo_path=repo_path, s=s, iolock=iolock, func=current_pipeline_step, locks=locks)
+            except Exception as e:
+                # pipeline step failed
+                with open(os.path.join(repo_path, FILENAME_WORKER_LOG), "a+") as l:
+                    # write errors to error log
+                    l.write(str(e) + "\n")
+                # remove downlaoded repository if specified  
+                if s[settings.ARG_CLEAN_AFTER_FAILURE]:
+                    _clean_up(repo_path, repo)
 
-        with open(os.path.join(repo_path, FILENAME_REPO_JSON), "r") as g:
-            repo = json.loads(g.read())
-        
-        
-        try:
-            # try to execute worker function
-            log = func[work_on]["worker_func"](repo=repo, repo_path=repo_path, s=s, iolock=iolock, func=func[work_on], locks=locks)
-        except Exception as e:
+                # for stats
+                current_pipeline_step["failed_value"].value += 1
+                current_pipeline_step["worker_count"].value -= 1
+                continue
+
+            
+            # write log
             with open(os.path.join(repo_path, FILENAME_WORKER_LOG), "a+") as l:
-                l.write(str(e) + "\n")
-            if s[settings.ARG_CLEAN_AFTER_FAILURE]:
-                _clean_up(repo_path, repo)
-            func[work_on]["failed_value"].value += 1
-            func[work_on]["worker_count"].value -= 1
-            work_on = len(func)
-            continue
+                l.write(log + "\n")
 
-        
-        # write log
-        with open(os.path.join(repo_path, FILENAME_WORKER_LOG), "a+") as l:
-            l.write(log + "\n")
+            # fill result queue
+            if current_pipeline_step["output_queue"]:
+                current_pipeline_step["output_queue"].put((repo_path, i))
 
-        # fill result queue
-        if func[work_on]["output_queue"]:
-            func[work_on]["output_queue"].put((repo_path, i))
+            # for stats
+            current_pipeline_step["count_value"].value += 1
+            current_pipeline_step["worker_count"].value -= 1
+            
+        except Exception as e:
+            # unknown Exception
+            print(e)
 
-        # increase count value
-        func[work_on]["count_value"].value += 1
-        
-        func[work_on]["worker_count"].value -= 1
 
-        work_on = len(func)
-
-def general_worker_pool(func_input_queue, s, iolock, locks):
-    end_event = Event()
-    end_event.clear()
-
-    # set up workers for project download
-    # download_pool = ThreadPoolExecutor(max_workers=s[settings.ARG_PROCESS_LIMIT], initializer=_general_worker_function, initargs=(func_input_queue, s, iolock, end_event))
-    #download_pool = Pool(s[settings.ARG_PROCESS_LIMIT], initializer=_general_worker_function, initargs=(func_input_queue, s, iolock, end_event))
+def start(func_input_queue, s, iolock, locks, end_event):
+    # set up worker pool
     daemon_threads = [Thread(target=_general_worker_function, daemon=True, args=[func_input_queue, s, iolock, end_event, i, locks]) for i in range(s[settings.ARG_PROCESS_LIMIT])]
     for daemon in daemon_threads:
         daemon.start()
 
     def end():
-        end_event.set()
+        if not end_event.is_set():
+            end_event.set()
+        print("wait for daemon workers to terminate")
+        print("this might take a while ...")
         for daemon in daemon_threads:
             daemon.join()
 

@@ -34,6 +34,10 @@ class Settings(dict):
         for key in args:
             self[key] = args[key]
         if ARG_TOKEN_FILE in self:
+            # read in token file
             with open(self[ARG_TOKEN_FILE], 'r') as f:
                 self[ARG_TOKEN_FILE] = [[row[0], row[1], None] for row in [line.replace('\n','').split(',') for line in f.readlines()]]
+        if ARG_PROCESS_LIMIT in self:
+            # the tool requires at least one process to run
+            ARG_PROCESS_LIMIT = max(1, ARG_PROCESS_LIMIT)
 

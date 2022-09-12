@@ -1,6 +1,7 @@
 import json
 import os
-from repository_fetcher.Github_Request import Github_Request, _GITHUB_MAX_PAGE_RESULTS, _GITHUB_MAX_SEARCH_RESULTS, _GITHUB_SEACH
+from time import sleep
+from repository_fetcher.Github_Request import Github_Request, _GITHUB_MAX_PAGE_RESULTS, _GITHUB_MAX_SEARCH_RESULTS, _GITHUB_SEARCH
 from settings import FILENAME_REPO_JSON
 import settings
 from repository_fetcher.Filter import Filter
@@ -24,20 +25,9 @@ class Get_Repositories(Github_Request):
             "fork" : self.s[settings.ARG_FORK]
         }
         # TODO
-        url = "{}?{}".format(_GITHUB_SEACH, Github_Request._createUrlParams(data))
+        url = "{}?{}".format(_GITHUB_SEARCH, Github_Request._createUrlParams(data))
         print(url)
         return self._get(url)
-
-    # def getRepositories(self, repository_count=1000):
-    #     items = []
-    #     page = 0
-    #     while(repository_count > 0):
-    #         count = _GITHUB_MAX_PAGE_RESULTS if repository_count > _GITHUB_MAX_PAGE_RESULTS else repository_count
-    #         response = self._getRepositories(per_page=count, page=page)
-    #         items += json.loads(response.text)["items"]
-    #         repository_count -= count
-    #         page += 1
-    #     return items
 
 
     def getRepositoriesGenerator(self):
@@ -58,9 +48,11 @@ class Get_Repositories(Github_Request):
                     last_sort = repos[int(len(repos)/3)]["stargazers_count"]
                     page=0
 
-            except KeyError:
-                # only for debugging
-                print(self._getRepositories(last_sort=last_sort, per_page=_GITHUB_MAX_PAGE_RESULTS, page=str(page)))
+            except Exception as e:
+                # unknown error, possibly due to github api
+                print(e)
+                # try again after a minute
+                sleep(60) 
 
             
 

@@ -13,12 +13,16 @@ class Filter(Github_Request):
         _since = datetime.datetime.strptime(since, '%d/%m/%y').isoformat()
         _until = datetime.datetime.strptime(until, '%d/%m/%y').isoformat()
         def filter(repo):
-            # with open(os.path.join(repo, FILENAME_REPO_JSON), "r") as g:
-            #     repo = json.loads(g.read())
-            repo["commits"] = self.get_commits(repo, _since, _until)
-            repo["commits_since"] = str(_since)
-            repo["commits_until"] = str(_until)
-            return len(repo["commits"]) > 0
+            try:
+                # with open(os.path.join(repo, FILENAME_REPO_JSON), "r") as g:
+                #     repo = json.loads(g.read())
+                repo["commits"] = self.get_commits(repo, _since, _until)
+                repo["commits_since"] = str(_since)
+                repo["commits_until"] = str(_until)
+                return len(repo["commits"]) > 0
+            except Exception as e:
+                print(e)
+                return False
         return filter
 
 
