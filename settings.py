@@ -25,8 +25,8 @@ FILENAME_SHELL_LOG = "shell.log"
 FILENAME_EXTENSION_FOR_ERRORS = "errors_" # e.g. errors_shell.log for shell errors
 
 TIMEOUT_DOWNLOAD = 600
-TIMEOUT_COMPILE = 800
-TIMEOUT_SHELL = 300
+TIMEOUT_COMPILE = 1200
+TIMEOUT_SHELL = 1200
 
 class Settings(dict):
     
