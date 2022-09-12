@@ -33,11 +33,14 @@ class Get_Repositories(Github_Request):
     def getRepositoriesGenerator(self):
         last_sort=self.s[settings.ARG_LAST_SORT]
         page = 0
+        total_stars = 0
         while True:
             try:
                 for _ in range(5):
+                    # same request multiple times, because git search is non deterministic
                     repos = self._getRepositories(last_sort=last_sort, per_page=_GITHUB_MAX_PAGE_RESULTS, page=str(page))["items"]
                     for repo in repos:
+                        total_stars += repo["stargazers_count"]
                         yield repo
 
                 page += 1
@@ -45,7 +48,7 @@ class Get_Repositories(Github_Request):
                 # search api is limited to 1000 results
                 # this provides a workaround to gain more
                 if(page*_GITHUB_MAX_PAGE_RESULTS >= _GITHUB_MAX_SEARCH_RESULTS):
-                    last_sort = repos[int(len(repos)/3)]["stargazers_count"]
+                    last_sort = total_stars / _GITHUB_MAX_SEARCH_RESULTS - 1
                     page=0
 
             except Exception as e:
