@@ -39,5 +39,6 @@ class Settings(dict):
                 self[ARG_TOKEN_FILE] = [[row[0], row[1], None] for row in [line.replace('\n','').split(',') for line in f.readlines()]]
         if ARG_PROCESS_LIMIT in self:
             # the tool requires at least one process to run
-            self[ARG_PROCESS_LIMIT] = max(1, self[ARG_PROCESS_LIMIT])
+            pl = self[ARG_PROCESS_LIMIT]
+            self[ARG_PROCESS_LIMIT] = max(1, pl)
 
