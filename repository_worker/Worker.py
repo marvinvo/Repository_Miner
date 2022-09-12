@@ -27,7 +27,7 @@ def _clean_up(repo_path, repo):
 
 def _general_worker_function(func, s, iolock, end_event, worker_id, locks):
     print("thread {} started!".format(worker_id))
-    work_on = len(func) # defines the pipeline step function to execute
+    work_on = len(func)-1 # defines the pipeline step function to execute
     while not end_event.is_set():
         try:
             if work_on < 0:
@@ -87,9 +87,10 @@ def _general_worker_function(func, s, iolock, end_event, worker_id, locks):
             # for stats
             current_pipeline_step["count_value"].value += 1
             current_pipeline_step["worker_count"].value -= 1
-            
+
         except Exception as e:
-            # unknown Exception
+            # unexpected error
+            print("Unexpected Error at _general_worker_function:")
             print(e)
 
 

@@ -49,7 +49,8 @@ class Get_Repositories(Github_Request):
                     page=0
 
             except Exception as e:
-                # unknown error, possibly due to github api
+                # unexpected error, possibly due to github api
+                print("Unexpected Error at getRepositoriesGenerator function:")
                 print(e)
                 # try again after a minute
                 sleep(60) 
