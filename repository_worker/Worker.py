@@ -99,6 +99,7 @@ def _general_worker_function(func, s, iolock, end_event, worker_id, locks):
                 _clean_up(repo_path, repo)
             func[work_on]["failed_value"].value += 1
             func[work_on]["worker_count"].value -= 1
+            work_on = len(func)
             continue
 
         
@@ -112,8 +113,10 @@ def _general_worker_function(func, s, iolock, end_event, worker_id, locks):
 
         # increase count value
         func[work_on]["count_value"].value += 1
-
+        
         func[work_on]["worker_count"].value -= 1
+
+        work_on = len(func)
 
 def general_worker_pool(func_input_queue, s, iolock, locks):
     end_event = Event()
