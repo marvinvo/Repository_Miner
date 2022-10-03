@@ -20,7 +20,7 @@ WORKDIR /opt/app
 
 # get Repository Miner
 RUN git clone https://github.com/marvinvo/Repository_Miner.git;
-ENV CAMBENCH_REAL=/opt/app/Repository_Miner/demo/CamBench_real/cambench_real.sh
+ENV CAMBENCH_REAL=/opt/app/cambench_real.sh
 
 # copy files to workdir
 COPY . .
