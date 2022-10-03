@@ -26,6 +26,10 @@ def clear_queue(queue):
 # FUNCTIONS TO INITIAL FILL QUEUES
 #
 
+
+def todo(output_queue, s, end_event):
+    return
+
 def fetched(output_queue, s, end_event):
     # find repositories that are already fetched
     for _, dirnames, _ in os.walk(s[settings.ARG_RESULTFOLDER]):
@@ -46,9 +50,7 @@ def fetched(output_queue, s, end_event):
                         if len(log.readlines()) == 0:
                             output_queue.put((project_path, 0))
                 
-
-
-
+def fetch(output_queue, s, end_event):
     # fetch new repositories from github
     print("start fetching from github")
     g = Get_Repositories(s)
@@ -62,7 +64,6 @@ def fetched(output_queue, s, end_event):
         repo = next(gen)
         output_queue.put((repo,i))
         i+=1
-
     
 
 def last_state(output_queue, s, end_event, last_state):
@@ -176,19 +177,19 @@ if __name__ == '__main__':
 
     func = []
     if s[settings.ARG_FETCH]:
-        queue_fill_functions += [fetched,] # this is not implemented as worker
+        queue_fill_functions += [todo, fetch] # this is not implemented as worker
     if s[settings.ARG_DOWNLOAD]:
         func += [{"worker_func": download_worker_func, "name": "download"}]
-        queue_fill_functions += [downloaded,]
+        queue_fill_functions += [fetched, downloaded]
     if s[settings.ARG_EXEC_AFTER_DOWNLOAD]:
         func += [{"worker_func": script_worker_func, "name": s[settings.ARG_EXEC_AFTER_DOWNLOAD]}]
-        queue_fill_functions += [after_download_script,]
+        queue_fill_functions += [todo, after_download_script]
     if s[settings.ARG_COMPILE]:
         func += [{"worker_func": compile_worker_func, "name": "compile"}]
-        queue_fill_functions += [compiled,]
+        queue_fill_functions += [todo, compiled]
     if s[settings.ARG_SHELL_SCRIPT]:
         func += [{"worker_func": script_worker_func, "name": s[settings.ARG_SHELL_SCRIPT]}]
-        queue_fill_functions += [lambda *x:x,] # add dummy function because this cannot fill any queue
+        queue_fill_functions += [todo,todo] # add dummy function because this cannot fill any queue
 
     for i in range(required_queues):
         func[i]["input_queue"] = queues[i]
@@ -212,8 +213,10 @@ if __name__ == '__main__':
     stats_thread.start()
 
     print("start filling worker queues...")
-    for i in range(1, len(queue_fill_functions)+1):
-        queue_fill_functions[-i](func[-i+1]["input_queue"], s, end_event)
+    for i in range(len(func)-1, -1, -1):
+        queue_fill_functions[2*i+1](func[i]["output_queue"], s, end_event)
+        queue_fill_functions[2*i](func[i]["input_queue"], s, end_event)
+
 
 
     
