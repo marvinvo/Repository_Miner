@@ -1,0 +1,17 @@
+SPEC javax.net.ssl.CertPathTrustManagerParameters
+
+OBJECTS
+	java.security.cert.CertPathParameters params;
+
+EVENTS
+	Con: CertPathTrustManagerParameters(params);	
+	
+ORDER
+	Con
+
+REQUIRES
+	generatedCertPathParameters[params];
+	
+ENSURES
+	generatedManagerFactoryParameters[this];
+	

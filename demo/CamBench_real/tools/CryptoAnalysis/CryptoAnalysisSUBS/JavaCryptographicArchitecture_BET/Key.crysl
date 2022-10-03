@@ -1,0 +1,13 @@
+SPEC java.security.Key
+
+OBJECTS 
+	byte[] keyMaterial;
+
+EVENTS
+	GetEnc: keyMaterial = getEncoded();
+
+ORDER
+	GetEnc*
+	
+ENSURES
+	randomized[iv] => preparedKeyMaterial[keyMaterial] after GetEnc;

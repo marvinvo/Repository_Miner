@@ -1,0 +1,29 @@
+SPEC java.security.KeyPair
+
+OBJECTS
+	java.security.PrivateKey consPriv;
+	java.security.PublicKey consPub;
+	java.security.PrivateKey retPriv;
+	java.security.PublicKey retPub;
+	
+EVENTS
+	Con: KeyPair(consPub, consPriv);
+	
+	GetPubl: retPub = getPublic();
+	GetPriv: retPriv = getPrivate();
+
+ORDER
+	Con, (GetPubl*, GetPriv*)*
+	
+REQUIRES
+	generatedPrivkey[consPriv];
+	generatedPubkey[consPub];
+	noCallTo[Con] => generatedKeypair[this, _];
+	
+ENSURES
+	generatedKeypair[this, _] after Con;
+	generatedPubkey[retPub] after GetPubl;
+	generatedPrivkey[retPriv] after GetPriv;
+	generatedKey[retPub,_] after GetPubl;
+	generatedKey[retPriv,_] after GetPriv;
+	
