@@ -40,8 +40,6 @@ def fetched(output_queue, s, end_event):
             project_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir)
             log_path = os.path.join(s[settings.ARG_RESULTFOLDER], dir, settings.FILENAME_WORKER_LOG)
             github_json = os.path.join(s[settings.ARG_RESULTFOLDER], dir, settings.FILENAME_REPO_JSON)
-            if not os.path.exists(log_path) and os.path.exists(github_json):
-                output_queue.put((project_path, 0))
             if os.path.exists(github_json):
                 if not os.path.exists(log_path):
                     output_queue.put((project_path, 0))
@@ -199,10 +197,9 @@ if __name__ == '__main__':
         func[i]["worker_count"] = Value('i', 0)
 
     end_event = Event()
-    end_event.is_set()
     end_event.clear()
                    
-    end_daemon_workers = Worker.start(func, s, iolock, locks={"gradle": Lock()}, end_event=end_event)
+    wait_for_finish = Worker.start(func, s, iolock, locks={"gradle": Lock()}, end_event=end_event)
     #worker_process = Process(target=workers, args=(func, s))
     #worker_process.daemon = True
     #worker_process.start()
@@ -217,11 +214,13 @@ if __name__ == '__main__':
         queue_fill_functions[2*i+1](func[i]["output_queue"], s, end_event)
         queue_fill_functions[2*i](func[i]["input_queue"], s, end_event)
 
-
-
+    # indirect end event
+    func[0]["input_queue"].put((None, 0))
     
 
+    wait_for_finish()
+
     #end_workers()
-    exit(0)
+    #exit(0)
         
 

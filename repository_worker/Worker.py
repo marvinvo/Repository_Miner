@@ -41,6 +41,10 @@ def _general_worker_function(func, s, iolock, end_event, worker_id, locks):
             try:
                 # try to get input from input queue of current pipeline step
                 repo_path, i = current_pipeline_step["input_queue"].get(block=True, timeout=1)
+                if not repo_path:
+                    # indirect end event
+                    current_pipeline_step["input_queue"].put((None, 0))
+                    return
                 # current pipeline step had input, hence try to execute last pipeline step next
                 # this somehow defines the weightnig to prefer last pipeline steps
                 work_on = len(func)-1
@@ -100,12 +104,8 @@ def start(func_input_queue, s, iolock, locks, end_event):
     for daemon in daemon_threads:
         daemon.start()
 
-    def end():
-        if not end_event.is_set():
-            end_event.set()
-        print("wait for daemon workers to terminate")
-        print("this might take a while ...")
+    def wait_for_end():
         for daemon in daemon_threads:
             daemon.join()
 
-    return end
+    return wait_for_end
