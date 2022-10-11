@@ -1,0 +1,22 @@
+Klone nach 'wiremock'...
+Hinweis: Wechsle zu '3157fa831a6efa4cfd7c4f37d04ee3e2a85b1366'.
+
+Sie befinden sich im Zustand eines 'losgelösten HEAD'. Sie können sich
+umschauen, experimentelle Änderungen vornehmen und diese committen, und
+Sie können alle möglichen Commits, die Sie in diesem Zustand machen,
+ohne Auswirkungen auf irgendeinen Branch verwerfen, indem Sie zu einem
+anderen Branch wechseln.
+
+Wenn Sie einen neuen Branch erstellen möchten, um Ihre erstellten Commits
+zu behalten, können Sie das (jetzt oder später) durch Nutzung von
+'switch' mit der Option -c tun. Beispiel:
+
+  git switch -c <neuer-Branchname>
+
+Oder um diese Operation rückgängig zu machen:
+  git switch -
+
+Sie können diesen Hinweis ausschalten, indem Sie die Konfigurationsvariable
+'advice.detachedHead' auf 'false' setzen.
+
+HEAD ist jetzt bei 3157fa83 Merge pull request #1932 from wiremock/proper-logging-test

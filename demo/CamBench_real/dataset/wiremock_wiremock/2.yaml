@@ -1,0 +1,51 @@
+#[optional]
+#The out-spelled name of the test case.
+name:
+  Use of deprecated JCA class 
+
+#[required]
+#The api that is (mis)used in the test case.
+api:
+  java.security.AccessController
+
+#[optional]
+#A description of the test case.
+description:
+  Since Java 17, the class AccessController is deprecated and marked for removal. As a replacement, new and simpler APIs have been added to JDK. 
+
+#[required]
+crypto-usage:
+  #[required]
+  violation: true
+  #[required]
+  #FUM based API misuse class
+  FUM:
+    - High-Level_Constraints
+  #[required]
+  #Location of the misuse specified by the file, method and line of code.
+  location:
+    #[required]
+    file: wiremock/src/main/java/com/github/tomakehurst/wiremock/common/VeryShortIdGenerator.java
+    #[required]
+    method: private static String setProperty(final String name, final String value)
+    #[required]
+    line: 69
+
+#[optional]
+#Metrics of the test case.
+codemetrics:
+  #[optional]
+  # Lines of Code
+  loc:
+  #[optional]
+  #McCabes Cyclomatic Complexity
+  cc:
+
+#[optional]
+security:
+  #[required]
+  #States, whether the testcase contains a security relevant misuse or not.
+  issue: 
+  #[optional]
+  #A field to add a description/additional information about the issue(s) contained in the test case.
+  issue-description:

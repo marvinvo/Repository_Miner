@@ -30,7 +30,8 @@ ENV GITHUB_TOKENS="/opt/app/CREDENTIALS.txt" \
     MAX_PROCESSES=20 \
     MEMORY_JAVA="3G" \ 
     STACKSIZE_JAVA="2M" \
-    LASTSORT=99999999
+    LASTSORT=99999999 \
+    TOOLS="/opt/app/Repository_Miner/demo/CamBench_real/tools"
 
 
 # required by the shell scripts

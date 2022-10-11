@@ -1,0 +1,29 @@
+> Task :wiremock-webhooks-extension:clean
+> Task :clean
+> Task :wiremock-webhooks-extension:processResources NO-SOURCE
+
+> Task :compileJava
+
+> Task :compileScala NO-SOURCE
+> Task :processResources
+> Task :classes
+> Task :wiremock-webhooks-extension:compileJava
+> Task :wiremock-webhooks-extension:compileScala NO-SOURCE
+> Task :wiremock-webhooks-extension:classes
+> Task :wiremock-webhooks-extension:jar
+> Task :wiremock-webhooks-extension:assemble
+> Task :jar
+> Task :javadoc
+> Task :javadocJar
+> Task :shadowJar
+> Task :sourcesJar
+> Task :assemble
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 8.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+See https://docs.gradle.org/7.3.3/userguide/command_line_interface.html#sec:command_line_warnings
+
+BUILD SUCCESSFUL in 7s
+11 actionable tasks: 11 executed

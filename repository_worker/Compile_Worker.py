@@ -35,7 +35,7 @@ def compile_worker_func(repo, repo_path, s, iolock, func, locks):
     # maven
     mvn_pom = os.path.join(project_path, "pom.xml") 
     if os.path.exists(mvn_pom):
-        return run_build("mvn clean compile -DskipTests='True'")
+        return run_build("mvn clean package -DskipTests='True'")
 
     # gradle
     build_gradle = os.path.join(project_path, "build.gradle")
@@ -43,8 +43,8 @@ def compile_worker_func(repo, repo_path, s, iolock, func, locks):
         with locks["gradle"]:
             if os.path.exists(os.path.join(project_path, "gradlew")):
                 run_build("chmod 777 ./gradlew") # make gradlew executable
-                return run_build("./gradlew clean build")
-            return run_build("gradle build")
+                return run_build("./gradlew clean assemble")
+            return run_build("gradle assemble")
     
     # ivy
     ivy_file = os.path.join(project_path, "ivy.xml")

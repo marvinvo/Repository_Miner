@@ -8,7 +8,7 @@ FORK="false"
 
 _bash_source=$( dirname "${BASH_SOURCE[0]}" )
 _bash_source="$(realpath "$_bash_source")"
-_execute_after_compile="$_bash_source/tools/execute_after_compile.sh"
+_execute_after_compile="$_bash_source/docker/execute_after_compile.sh"
 
 
 python3 "$_bash_source/../../main.py" --resultsfolder "$RESULTS_FOLDER" --tokenfile "$GITHUB_TOKENS" \

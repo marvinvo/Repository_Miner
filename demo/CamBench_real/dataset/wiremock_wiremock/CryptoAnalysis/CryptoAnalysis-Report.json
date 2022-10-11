@@ -1,0 +1,339 @@
+{
+  "sarifVersion" : "2.0.0",
+  "runs" : [ {
+    "files" : {
+      "com/github/tomakehurst/wiremock/http/ssl/SSLContextBuilder.java" : {
+        "mimeType" : "text/java"
+      },
+      "com/github/tomakehurst/wiremock/jetty94/SslContexts.java" : {
+        "mimeType" : "text/java"
+      },
+      "com/github/tomakehurst/wiremock/http/HttpClientFactory.java" : {
+        "mimeType" : "text/java"
+      }
+    },
+    "resources" : {
+      "rules" : {
+        "HardCodedError" : {
+          "id" : "HardCodedError",
+          "fullDescription" : {
+            "text" : null
+          }
+        },
+        "NeverTypeOfError-1" : {
+          "id" : "NeverTypeOfError",
+          "fullDescription" : {
+            "text" : "Reported when a value was found to be of a certain reference type: For example, a character array containing a password should never be converted from a String"
+          }
+        },
+        "NeverTypeOfError" : {
+          "id" : "NeverTypeOfError",
+          "fullDescription" : {
+            "text" : "Reported when a value was found to be of a certain reference type: For example, a character array containing a password should never be converted from a String"
+          }
+        },
+        "RequiredPredicateError" : {
+          "id" : "RequiredPredicateError",
+          "fullDescription" : {
+            "text" : "An object A expects an object B to have been used correctly (CrySL blocks REQUIRES and ENSURES). For example a Cipher object requires a SecretKey object to be correctly and securely generated."
+          }
+        },
+        "TypestateError" : {
+          "id" : "TypestateError",
+          "fullDescription" : {
+            "text" : "The ORDER block of CrySL is violated, i.e., the expected method sequence call to be made is incorrect. For example, a Signature object expects a call to initSign(key) prior to update(data)."
+          }
+        },
+        "IncompleteOperationError" : {
+          "id" : "IncompleteOperationError",
+          "fullDescription" : {
+            "text" : "The usage of an object may be incomplete: For example a Cipherobject may be initialized but never used for en- or decryption, this may render the code dead. This error heavily depends on the computed call graph (CHA by default)"
+          }
+        },
+        "IncompleteOperationError-1" : {
+          "id" : "IncompleteOperationError",
+          "fullDescription" : {
+            "text" : "The usage of an object may be incomplete: For example a Cipherobject may be initialized but never used for en- or decryption, this may render the code dead. This error heavily depends on the computed call graph (CHA by default)"
+          }
+        },
+        "HardCodedError-1" : {
+          "id" : "HardCodedError",
+          "fullDescription" : {
+            "text" : null
+          }
+        },
+        "ConstraintError" : {
+          "id" : "ConstraintError",
+          "fullDescription" : {
+            "text" : "A constraint of a CrySL rule is violated, e.g., a key is generated with the wrong key size."
+          }
+        },
+        "RequiredPredicateError-2" : {
+          "id" : "RequiredPredicateError",
+          "fullDescription" : {
+            "text" : "An object A expects an object B to have been used correctly (CrySL blocks REQUIRES and ENSURES). For example a Cipher object requires a SecretKey object to be correctly and securely generated."
+          }
+        },
+        "RequiredPredicateError-1" : {
+          "id" : "RequiredPredicateError",
+          "fullDescription" : {
+            "text" : "An object A expects an object B to have been used correctly (CrySL blocks REQUIRES and ENSURES). For example a Cipher object requires a SecretKey object to be correctly and securely generated."
+          }
+        },
+        "IncompleteOperationError-2" : {
+          "id" : "IncompleteOperationError",
+          "fullDescription" : {
+            "text" : "The usage of an object may be incomplete: For example a Cipherobject may be initialized but never used for en- or decryption, this may render the code dead. This error heavily depends on the computed call graph (CHA by default)"
+          }
+        }
+      }
+    },
+    "results" : [ {
+      "error_id" : -202330777,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/jetty94/SslContexts.java"
+          },
+          "region" : {
+            "startLine" : 127
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::jetty94::SslContexts::buildKeyStore"
+      } ],
+      "ruleId" : "NeverTypeOfError",
+      "message" : {
+        "text" : "Second parameter should never be of type java.lang.String..",
+        "richText" : "NeverTypeOfError violating CrySL rule for java.security.KeyStore."
+      }
+    }, {
+      "error_id" : -202330777,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/jetty94/SslContexts.java"
+          },
+          "region" : {
+            "startLine" : 127
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::jetty94::SslContexts::buildKeyStore"
+      } ],
+      "ruleId" : "HardCodedError",
+      "message" : {
+        "text" : "Second parameter should never be hardcoded..",
+        "richText" : "HardCodedError violating CrySL rule for java.security.KeyStore."
+      }
+    }, {
+      "error_id" : -1965818306,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/HttpClientFactory.java"
+          },
+          "region" : {
+            "startLine" : 210
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::HttpClientFactory::containsCertificate"
+      } ],
+      "ruleId" : "TypestateError",
+      "message" : {
+        "text" : "Unexpected call to method getEntry on object of type java.security.KeyStore. Expect a call to one of the following methods getKey.",
+        "richText" : "TypestateError violating CrySL rule for java.security.KeyStore."
+      }
+    }, {
+      "error_id" : 1579412435,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/HttpClientFactory.java"
+          },
+          "region" : {
+            "startLine" : 190
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::HttpClientFactory::buildSSLContextWithTrustStore"
+      } ],
+      "ruleId" : "IncompleteOperationError",
+      "message" : {
+        "text" : "Operation on object of type java.security.KeyStore object not completed. Expected call to getKey.",
+        "richText" : "IncompleteOperationError violating CrySL rule for java.security.KeyStore."
+      }
+    }, {
+      "error_id" : -110709857,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/HttpClientFactory.java"
+          },
+          "region" : {
+            "startLine" : 194
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::HttpClientFactory::buildSSLContextWithTrustStore"
+      } ],
+      "ruleId" : "IncompleteOperationError-1",
+      "message" : {
+        "text" : "Operation on object of type java.security.KeyStore object not completed. Expected call to getKey.",
+        "richText" : "IncompleteOperationError violating CrySL rule for java.security.KeyStore."
+      }
+    }, {
+      "error_id" : 629291198,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/HttpClientFactory.java"
+          },
+          "region" : {
+            "startLine" : 193
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::HttpClientFactory::buildSSLContextWithTrustStore"
+      } ],
+      "ruleId" : "IncompleteOperationError-2",
+      "message" : {
+        "text" : "Operation on object of type java.security.KeyStore object not completed. Expected call to getKey.",
+        "richText" : "IncompleteOperationError violating CrySL rule for java.security.KeyStore."
+      }
+    }, {
+      "error_id" : -916559500,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/ssl/SSLContextBuilder.java"
+          },
+          "region" : {
+            "startLine" : 125
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::ssl::SSLContextBuilder::loadKeyMaterial"
+      } ],
+      "ruleId" : "NeverTypeOfError-1",
+      "message" : {
+        "text" : "Second parameter should never be of type java.lang.String..",
+        "richText" : "NeverTypeOfError violating CrySL rule for javax.net.ssl.KeyManagerFactory."
+      }
+    }, {
+      "error_id" : -916559500,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/ssl/SSLContextBuilder.java"
+          },
+          "region" : {
+            "startLine" : 125
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::ssl::SSLContextBuilder::loadKeyMaterial"
+      } ],
+      "ruleId" : "HardCodedError-1",
+      "message" : {
+        "text" : "Second parameter should never be hardcoded..",
+        "richText" : "HardCodedError violating CrySL rule for javax.net.ssl.KeyManagerFactory."
+      }
+    }, {
+      "error_id" : -380855416,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/ssl/SSLContextBuilder.java"
+          },
+          "region" : {
+            "startLine" : 145
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::ssl::SSLContextBuilder::build"
+      } ],
+      "ruleId" : "ConstraintError",
+      "message" : {
+        "text" : "First parameter (with value \"TLS\") should be any of {TLSv1.2}.",
+        "richText" : "ConstraintError violating CrySL rule for javax.net.ssl.SSLContext."
+      }
+    }, {
+      "error_id" : -1115299289,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/ssl/SSLContextBuilder.java"
+          },
+          "region" : {
+            "startLine" : 138
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::ssl::SSLContextBuilder::initSSLContext"
+      } ],
+      "ruleId" : "RequiredPredicateError",
+      "message" : {
+        "text" : "Third parameter was not properly generated as randomized.",
+        "richText" : "RequiredPredicateError violating CrySL rule for javax.net.ssl.SSLContext."
+      }
+    }, {
+      "error_id" : 737414371,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/ssl/SSLContextBuilder.java"
+          },
+          "region" : {
+            "startLine" : 138
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::ssl::SSLContextBuilder::initSSLContext"
+      } ],
+      "ruleId" : "RequiredPredicateError-1",
+      "message" : {
+        "text" : "Second parameter was not properly generated as generated Trust Managers.",
+        "richText" : "RequiredPredicateError violating CrySL rule for javax.net.ssl.SSLContext."
+      }
+    }, {
+      "error_id" : 1758752298,
+      "preceding_error_ids" : [ ],
+      "subsequent_error_ids" : [ ],
+      "locations" : [ {
+        "physicalLocation" : {
+          "fileLocation" : {
+            "uri" : "com/github/tomakehurst/wiremock/http/ssl/SSLContextBuilder.java"
+          },
+          "region" : {
+            "startLine" : 138
+          }
+        },
+        "fullyQualifiedLogicalName" : "com::github::tomakehurst::wiremock::http::ssl::SSLContextBuilder::initSSLContext"
+      } ],
+      "ruleId" : "RequiredPredicateError-2",
+      "message" : {
+        "text" : "First parameter was not properly generated as generated Key Managers.",
+        "richText" : "RequiredPredicateError violating CrySL rule for javax.net.ssl.SSLContext."
+      }
+    } ],
+    "tool" : {
+      "name" : "CryptoAnalysis",
+      "semanticVersion" : "2.8.0-SNAPSHOT",
+      "language" : "en-US",
+      "version" : "2.8.0-SNAPSHOT"
+    }
+  } ]
+}
