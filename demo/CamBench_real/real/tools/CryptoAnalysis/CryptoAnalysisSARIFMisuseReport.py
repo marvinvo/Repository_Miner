@@ -1,32 +1,24 @@
 from AbstractMisuseReport import AbstractMisuseReport
-from tools.CryptoAnalysis import CryptoAnalysis
+from tools.CryptoAnalysis import CryptoAnalysisAnalysis
 
 
 class CryptoAnalysisSARIFMisuseReport(AbstractMisuseReport):
+
+    __mapper_args__ = {'polymorphic_identity': 'cryptoanalysis'}
     
     def misuse_name(*args):
-        return CryptoAnalysis.TOOL_NAME
+        return CryptoAnalysisAnalysis.TOOL_NAME
 
     def __init__(self, crypto_analysis_error):
         self.crypto_analysis_error = crypto_analysis_error
 
-    def get_file_path(self) -> str:
-        return self.crypto_analysis_error['locations']['physicalLocation']['fileLocation']['uri']
+        self.file_path = self.crypto_analysis_error['locations'][0]['physicalLocation']['fileLocation']['uri']
+        self.method_name = self.crypto_analysis_error['locations'][0]['fullyQualifiedLogicalName'].split("::")[-1]
+        self.method_parameter_types = None
+        self.line = int(self.crypto_analysis_error['locations'][0]['physicalLocation']['region']['startLine'])
+        self.api = self.crypto_analysis_error['message']['richText'].split(' ')[-1][:-1]
+        self.name = self.crypto_analysis_error['message']['richText'].split(' ')[0]
+        self.description = self.crypto_analysis_error['message']['text']
 
-    def get_method_name(self) -> str:
-        return self.crypto_analysis_error['locations']['fullyQualifiedLogicalName'].split("::")[-1]
+        print(self.__repr__())
 
-    def get_line(self) -> int:
-        return int(self.crypto_analysis_error['locations']['physicalLocation']['region']['startLine'])
-
-    def get_api(self) -> str:
-        return self.crypto_analysis_error['message']['richText'].split(' ')[-1][:-1]
-
-    def get_name(self) -> str:
-        return self.crypto_analysis_error['message']['richText'].split(' ')[0]
-
-    def get_description(self) -> str:
-        return self.crypto_analysis_error['message']['text']
-
-    def check_if_match_label(self, label) -> bool:
-        pass

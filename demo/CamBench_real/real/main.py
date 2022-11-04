@@ -2,61 +2,87 @@
 
 import glob
 import sys
+from sqlalchemy import create_engine
 
 import yaml
 
 from Project import Project
-from tools.CryptoAnalysis.CryptoAnalysis import CryptoAnalysis
-from tools.CryptoGuard.CryptoGuard import CryptoGuard
+from AbstractMisuseReport import AbstractMisuseReport
+from AbstractAnalysis import AbstractAnalysis
+from matcher.AbstractMatcher import AbstractMatcher
+from tools.CryptoAnalysis.CryptoAnalysisAnalysis import CryptoAnalysis
+from tools.CryptoGuard.CryptoGuardAnalysis import CryptoGuard
 from Label import Label
+
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import registry
+from sqlalchemy.orm import relationship
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
 
 
 
 if __name__ == '__main__':
     repo_path = sys.argv[1]
     project_path = sys.argv[2]
+    db_path = sys.argv[3]
 
     if not (repo_path and project_path):
         print("missing input parameter")
         exit(1)
 
-    # perform analysis with all tools and wrap results as AbstractMisuseReports
+    # connect to database
+    engine = create_engine("sqlite:///test.db", echo=True)
+
+    # create tables if not exist
+    Project.metadata.create_all(engine)
+    AbstractAnalysis.metadata.create_all(engine)
+    AbstractMisuseReport.metadata.create_all(engine)
+    Label.metadata.create_all(engine)
+    AbstractMatcher.metadata.create_all(engine)
+    
+
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
     project = Project(repo_path, project_path)
-    #CryptoAnalysis(project)
+    for label in project.get_labels():
+        print(label)
+        session.add(label)
+    session.commit()
+
+    # perform analysis with all tools and wrap results as AbstractMisuseReports
     analyzer = [CryptoAnalysis(project), CryptoGuard(project)]
-
     for analysis in analyzer:
-        print(f"execute {analysis.tool_name()} analysis")
         analysis.execute()
-    
+        session.add_all(analysis.get_reported_misuses())
 
-    # read labels
-    print(f"parse labels")
-    labels = []
-    for label_path in glob.glob(f"{repo_path}/*.yaml"):
-        with open(label_path, "r") as label:
-            try:
-                labels.append(Label(yaml.safe_load(label)))
-            except yaml.YAMLError as exc:
-                print(exc)
-    print(f"{len(labels)} labels found")
-    
-
-    # match misuse with labels
-    print(f"match reported misuses with labels for")
+    # calculate matches
     for analysis in analyzer:
-        print(f"... {analysis.tool_name()}")
-        misuses = analysis.get_reported_misuses()
-        if misuses == None:
-            # TODO analysis failed!
-            continue
-        for misuse in misuses:
-            for label in labels:
-                misuse.check_if_matches_label(label)
+        for misuse in analysis.get_reported_misuses():
+            for label in project.get_labels():
+                session.add(AbstractMatcher(label, misuse))
 
-    print("RESULTS")
-    for label in labels:
-        print(label.matching_errors)
+    
+
+            
+    session.commit()
+
+    # # match misuse with labels
+    # print(f"match reported misuses with labels for")
+    # for analysis in analyzer:
+    #     print(f"... {analysis.tool_name()}")
+    #     misuses = analysis.get_reported_misuses()
+    #     if misuses == None:
+    #         # TODO analysis failed!
+    #         continue
+    #     for misuse in misuses:
+    #         for label in labels:
+    #             misuse.check_if_matches_label(label)
+
+    # print("RESULTS")
+    # for label in labels:
+    #     print(label.matching_errors)
 
     

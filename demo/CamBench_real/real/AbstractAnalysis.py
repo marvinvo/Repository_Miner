@@ -1,14 +1,28 @@
 import os
 import pathlib
 
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+from base import Base
+from Project import Project
 
-class AbstractAnalysis():
+TOOL_NAME="tool_name"
+MISUSE_REPORTS="misuse_reports"
 
-    def tool_name() -> str:
-        pass
 
-    def __init__(self, project):
-        pass
+class AbstractAnalysis(Base):
+
+    __tablename__="analysis"
+
+    id = Column(Integer, primary_key=True)
+    tool_name = Column(String)
+    finished_without_exception = Column(Integer)
+
+    analysis_tool = Column('type', String(50))
+    __mapper_args__ = {'polymorphic_on': analysis_tool}
+
+    project_id = Column(Integer, ForeignKey("project.id"))
+    misuses = relationship("AbstractMisuseReport", backref="analysis")
 
     def execute(self):
         pass
@@ -20,3 +34,8 @@ class AbstractAnalysis():
         if os.path.exists(tool_path):
             return tool_path
         raise FileNotFoundError(tool_path)
+
+    def get_reported_misuses(self):
+        pass
+
+    

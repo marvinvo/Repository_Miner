@@ -16,7 +16,7 @@ def compile_worker_func(repo, repo_path, s, iolock, func, locks):
         try:
             with open(os.path.join(repo_path, FILENAME_EXTENSION_FOR_ERRORS + FILENAME_COMPILE_LOG), "w+") as f:
                 # execute build command
-                process_out = subprocess.check_output(cmd.split(), cwd=project_path, timeout=TIMEOUT_COMPILE, stderr=f).decode("utf-8")
+                process_out = subprocess.check_output(str(cmd).split(), cwd=project_path, timeout=TIMEOUT_COMPILE, stderr=f).decode("utf-8")
 
             with open(os.path.join(repo_path, FILENAME_COMPILE_LOG), "w+") as f:
                 # write log
@@ -43,7 +43,7 @@ def compile_worker_func(repo, repo_path, s, iolock, func, locks):
         with locks["gradle"]:
             if os.path.exists(os.path.join(project_path, "gradlew")):
                 run_build("chmod 777 ./gradlew") # make gradlew executable
-                return run_build("./gradlew clean assemble")
+                return run_build("./gradlew")
             return run_build("gradle assemble")
     
     # ivy
