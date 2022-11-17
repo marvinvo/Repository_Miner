@@ -35,6 +35,23 @@ class AbstractAnalysis(Base):
             return tool_path
         raise FileNotFoundError(tool_path)
 
+    def get_tool_directory(self, tool_name):
+        root_path = pathlib.Path(__file__).parent.parent.resolve()
+        print(root_path)
+        tool_path = os.path.join(root_path, "tools", tool_name)
+        if os.path.exists(tool_path):
+            return tool_path
+        raise FileNotFoundError(tool_path)
+
+    def get_tool_path(self, tool_name):
+        tool_directory = self.get_tool_directory(tool_name)
+        generator = pathlib.Path(tool_directory).rglob(f'{tool_name}.jar')
+        tool_path = next(generator, None)
+        if(tool_path):
+            return tool_path
+
+        raise FileNotFoundError(tool_directory)
+
     def get_reported_misuses(self):
         pass
 

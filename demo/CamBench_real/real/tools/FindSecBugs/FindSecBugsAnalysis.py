@@ -2,22 +2,18 @@ import json
 import os
 import pathlib
 import subprocess
-from AbstractAnalysis import AbstractAnalysis
 import xml.etree.ElementTree as ET
+from AbstractAnalysis import AbstractAnalysis
+from tools.FindSecBugs.FindSecBugsXMLMisuseReport import FindSecBugsXMLMisuseReport
 
-from tools.CryptoGuard.CryptoGuardXMLMisuseReport import CryptoGuardXMLMisuseReport
+TOOL_NAME="SpotBugs"
 
-TOOL_NAME="CryptoGuard"
+class FindSecBugs(AbstractAnalysis):
 
-class CryptoGuard(AbstractAnalysis):
-
-    __mapper_args__ = {'polymorphic_identity': 'cryptoguard'}
-
-    def tool_name(*args):
-        return TOOL_NAME
+    __mapper_args__ = {'polymorphic_identity': 'spotbugs'}
     
     def __init__(self, project):
-        self.tool_name = "CryptoGuard"
+        self.tool_name = "SpotBugs"
         self.project = project
         self.reported_misuses = None
         self.init_XML()
@@ -25,7 +21,7 @@ class CryptoGuard(AbstractAnalysis):
     def move_result_to_result_folder(self):
         for root, dirs, files in os.walk(pathlib.Path().resolve()):
             for file in files:
-                if "cryptoguard" in file.lower() and ".xml" in file.lower():
+                if "spotbugs" in file.lower() and ".xml" in file.lower():
                     origin = os.path.join(pathlib.Path().resolve(), file)
                     self.report_file_path = os.path.join(self.report_folder_path, file)
                     os.rename(origin, self.report_file_path)
@@ -33,41 +29,44 @@ class CryptoGuard(AbstractAnalysis):
 
     def parse_XML(self):
         root = ET.parse(self.report_file_path).getroot()
-        return [CryptoGuardXMLMisuseReport(error) for error in root.iter('BugInstance')]
+        return [FindSecBugsXMLMisuseReport(error) for error in root.iter('BugInstance')]
 
     def init_XML(self):
         # create folder for reports
-        self.report_folder_path = os.path.join(self.project.repository_path, "CryptoGuard")
+        self.report_folder_path = os.path.join(self.project.repository_path, self.tool_name)
         #self.report_file_path = os.path.join(self.report_folder_path, "CryptoAnalysis-Report.json")
         if not os.path.exists(self.report_folder_path):
             os.mkdir(self.report_folder_path)
 
         # retrieve paths to execute the tool
-        self.cryptoguard_folder = self.get_path_for_tool("CryptoGuard")
-        self.tool = os.path.join(self.cryptoguard_folder, "cryptoguard.jar")
+        self.spotbugs_folder = self.get_tool_directory(self.tool_name)
+        self.tool = self.get_tool_path(self.tool_name)
         print(self.tool)
 
+        # get path of the FindSecBugs plugin
+        self.findsecbugs_folder = self.get_tool_directory("FindSecBugs")
+        self.findsecbugs_plugin = os.listdir(self.findsecbugs_folder)[0]
+        self.findsecbugs_plugin_path = os.path.join(self.findsecbugs_folder, self.findsecbugs_plugin)
 
-        self.cmd = f'java -jar {self.tool} -in jar -s "{self.project.project_path}" -m SX'
+        self.report_file_path = f'{self.report_folder_path}/spotbugs.xml'
+        self.cmd = f'java -jar {self.tool} -textui -pluginList "{self.findsecbugs_plugin_path}" -html:default.xsl={self.report_folder_path}/spotbugs.html -xml={self.report_file_path} "{self.project.project_path}"'
 
         self.parse = self.parse_XML
 
 
     def execute(self):
-        print("====== Execute CryptoGuard Analysis ======")
+        print("====== Execute SpotBugs/FindSecBugs Analysis ======")
         self.finished_without_exception = False
         try:
             subprocess.check_output(self.cmd, shell=True).decode("utf-8")
             self.finished_without_exception = False
-            self.move_result_to_result_folder()
+            #self.move_result_to_result_folder()
             self.reported_misuses = self.parse()
         except subprocess.CalledProcessError as cpe:
             print(cpe.stderr)
         except subprocess.TimeoutExpired:
-            print("CryptoGuardAnalysis Timeout")
+            print("SpotBugs Timeout")
 
     def get_reported_misuses(self):
         self.misuses = self.reported_misuses
         return self.reported_misuses
-
-    
