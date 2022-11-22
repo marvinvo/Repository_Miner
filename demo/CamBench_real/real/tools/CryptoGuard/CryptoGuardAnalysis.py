@@ -12,9 +12,6 @@ TOOL_NAME="CryptoGuard"
 class CryptoGuard(AbstractAnalysis):
 
     __mapper_args__ = {'polymorphic_identity': 'cryptoguard'}
-
-    def tool_name(*args):
-        return TOOL_NAME
     
     def __init__(self, project):
         self.tool_name = "CryptoGuard"
