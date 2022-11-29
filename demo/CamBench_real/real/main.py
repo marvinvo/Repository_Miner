@@ -12,6 +12,7 @@ from AbstractAnalysis import AbstractAnalysis
 from matcher.AbstractMatcher import AbstractMatcher
 from tools.CryptoAnalysis.CryptoAnalysisAnalysis import CryptoAnalysis
 from tools.CryptoGuard.CryptoGuardAnalysis import CryptoGuard
+from tools.FindSecBugs.FindSecBugsAnalysis import FindSecBugs
 from Label import Label
 
 from sqlalchemy.orm import sessionmaker
@@ -26,7 +27,7 @@ from sqlalchemy.orm import Session
 if __name__ == '__main__':
     repo_path = sys.argv[1]
     project_path = sys.argv[2]
-    db_path = sys.argv[3]
+    #db_path = sys.argv[3]
 
     if not (repo_path and project_path):
         print("missing input parameter")
@@ -53,7 +54,7 @@ if __name__ == '__main__':
     session.commit()
 
     # perform analysis with all tools and wrap results as AbstractMisuseReports
-    analyzer = [CryptoAnalysis(project), CryptoGuard(project)]
+    analyzer = [CryptoAnalysis(project), CryptoGuard(project), FindSecBugs(project)]
     for analysis in analyzer:
         analysis.execute()
         session.add_all(analysis.get_reported_misuses())

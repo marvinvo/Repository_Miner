@@ -33,10 +33,10 @@ class CryptoAnalysis(AbstractAnalysis):
         # retrieve paths to execute the tool
         cryptoanalysis_folder = self.get_path_for_tool("CryptoAnalysis")
         print(cryptoanalysis_folder)
-        self.tool = os.path.join(cryptoanalysis_folder, "CryptoAnalysisSUBS", "SUBS.jar")
-        self.rules = os.path.join(cryptoanalysis_folder, "CryptoAnalysisSUBS", "JavaCryptographicArchitecture_BET")
+        self.tool = os.path.join(cryptoanalysis_folder, "CryptoAnalysis273", "CryptoAnalysis-2.7.3-jar-with-dependencies.jar")
+        self.rules = os.path.join(cryptoanalysis_folder, "CryptoAnalysis273", "rules")
 
-        self.cmd = f'java -Xmx5G -Xss100M -cp "{self.tool}" crypto.HeadlessCryptoScanner --rulesDir "{self.rules}" --appPath "{self.project.project_path}" --reportPath "{self.report_folder_path}" --subsequenterrordetection --reportFormat "sarif"'
+        self.cmd = f'java -Xmx5G -Xss100M -cp "{self.tool}" crypto.HeadlessCryptoScanner --rulesDir "{self.rules}" --appPath "{self.project.project_path}" --reportPath "{self.report_folder_path}" --reportFormat "sarif"'
         self.parse = self.parse_SARIF
 
 

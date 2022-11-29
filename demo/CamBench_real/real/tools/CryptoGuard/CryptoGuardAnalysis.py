@@ -12,9 +12,6 @@ TOOL_NAME="CryptoGuard"
 class CryptoGuard(AbstractAnalysis):
 
     __mapper_args__ = {'polymorphic_identity': 'cryptoguard'}
-
-    def tool_name(*args):
-        return TOOL_NAME
     
     def __init__(self, project):
         self.tool_name = "CryptoGuard"
@@ -47,12 +44,14 @@ class CryptoGuard(AbstractAnalysis):
         self.tool = os.path.join(self.cryptoguard_folder, "cryptoguard.jar")
         print(self.tool)
 
+
         self.cmd = f'java -jar {self.tool} -in jar -s "{self.project.project_path}" -m SX'
 
         self.parse = self.parse_XML
 
 
     def execute(self):
+        print("====== Execute CryptoGuard Analysis ======")
         self.finished_without_exception = False
         try:
             subprocess.check_output(self.cmd, shell=True).decode("utf-8")
@@ -62,7 +61,7 @@ class CryptoGuard(AbstractAnalysis):
         except subprocess.CalledProcessError as cpe:
             print(cpe.stderr)
         except subprocess.TimeoutExpired:
-            print("CryptoAnalysis Timeout")
+            print("CryptoGuardAnalysis Timeout")
 
     def get_reported_misuses(self):
         self.misuses = self.reported_misuses
